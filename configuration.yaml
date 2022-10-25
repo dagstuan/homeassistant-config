@@ -1,0 +1,339 @@
+homeassistant:
+  name: Hjemme
+  latitude: 63.431148449714215
+  longitude: 10.45704723361333
+  unit_system: metric
+  time_zone: Europe/Oslo
+  external_url: "https://home.dagstuan.com"
+  internal_url: "http://nas.local:8123"
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+api:
+
+nordpool:
+
+recorder:
+  purge_keep_days: 14
+  commit_interval: 10
+  include:
+    domains:
+      - automation
+      - light
+      - switch
+      - media_player
+      - climate
+      - weather
+      - person
+      - binary_sensor
+    entity_globs:
+      - sensor.clock*
+      - sensor.date*
+      - sensor.time*
+      - sensor.electricity*
+      - sensor.month_peak_hour_consumption_hjemme
+      - sensor.monthly_cost_hjemme
+      - sensor.monthly_net_consumption_hjemme
+      - sensor.mill*
+      - sensor.climate_*
+      - sensor.outdoor_temperature
+      - sensor.pi_hole*
+      - sensor.rbr750_gateway*
+      - sensor.speedtest*
+      - sensor.kontor*
+      - sensor.soverom*
+      - sensor.stua*
+      - sensor.climate_*
+      - sensor.tautulli*
+      - sensor.vaskemaskin*
+      - device_tracker.ios_dag
+      - device_tracker.ios_ingvild
+  db_url: !secret mariadb_url
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.9.8.2/32
+
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+mqtt:
+  light:
+    - unique_id: "kjokkenspotter"
+      name: "Spotter"
+      state_topic: "kjokken/spots/status"
+      command_topic: "kjokken/spots/switch"
+      brightness_state_topic: 'kjokken/spots/brightness'
+      brightness_command_topic: 'kjokken/spots/brightness/set'
+      payload_off: "OFF"
+      on_command_type: 'brightness'
+
+    - name: "Øy"
+      unique_id: "kjokkenoy"
+      state_topic: "kjokken/oy/status"
+      command_topic: "kjokken/oy/switch"
+      brightness_state_topic: 'kjokken/oy/brightness'
+      brightness_command_topic: 'kjokken/oy/brightness/set'
+      payload_off: "OFF"
+      on_command_type: 'brightness'
+
+google_assistant:
+  project_id: home-assistant-34e7d
+  service_account: !include service_account.json
+  report_state: true
+  entity_config:
+    light.spotter:
+      name: "Spotter"
+      expose: true
+      aliases:
+        - Spotlights
+        - Kjøkkenspotter
+        - Downlights
+    light.oy:
+      name: "Øy"
+      expose: true
+      aliases:
+        - Kjøkkenøy
+        - Øya
+        - Øy
+        - Mikro
+        - Mikrobølgeovn
+        - Kjøkkenøya
+        - Hengelys
+
+input_boolean:
+  lights_dimmed_by_movie_mode:
+    name: Lights were dimmed by movie mode
+  alarm_triggered_today:
+    name: Alarm triggered today
+
+input_text:
+  stue_bryter_helper_last_controller_event:
+    name: stue_bryter_helper_last_controller_event
+
+input_number:
+  climate_kontor_preferred_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_kontor_window_open_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_kontor_comfort_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_kontor_sleep_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_kontor_away_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_stua_preferred_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_stua_window_open_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_stua_comfort_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_stua_sleep_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_stua_away_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_soverom_preferred_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_soverom_window_open_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_soverom_comfort_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_soverom_sleep_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_soverom_away_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+
+template:
+  - sensor:
+    - name: Climate kontor hvac action
+      state: "{{ state_attr('climate.kontor', 'hvac_action') }}"
+    - name: climate_kontor_heating_state_graph
+      unit_of_measurement: '°C'
+      state: >
+        {% if is_state_attr ('climate.kontor','hvac_action', 'heating') %}
+        {{ state_attr('climate.kontor', 'current_temperature') }}
+        {% else %}
+        0
+        {% endif %}
+    - name: Climate stua hvac action
+      state: "{{ state_attr('climate.stua', 'hvac_action') }}"
+    - name: climate_stua_heating_state_graph
+      unit_of_measurement: '°C'
+      state: >
+        {% if is_state_attr ('climate.stua','hvac_action', 'heating') %}
+        {{ state_attr('climate.stua', 'current_temperature') }}
+        {% else %}
+        0
+        {% endif %}
+    - name: Climate soverom hvac action
+      state: "{{ state_attr('climate.soverom', 'hvac_action') }}"
+    - name: climate_soverom_heating_state_graph
+      unit_of_measurement: '°C'
+      state: >
+        {% if is_state_attr ('climate.soverom','hvac_action', 'heating') %}
+        {{ state_attr('climate.soverom', 'current_temperature') }}
+        {% else %}
+        0
+        {% endif %}
+    - name: Outdoor temperature
+      state: "{{ state_attr('weather.home', 'temperature') }}"
+      unit_of_measurement: "°C"
+      state_class: measurement
+
+sensor:
+  - platform: systemmonitor
+    resources:
+      - type: disk_use_percent
+      - type: memory_free
+      - type: disk_free
+      - type: processor_use
+
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      - 'date_time'
+      - 'date_time_utc'
+      - 'date_time_iso'
+      - 'time_date'
+      - 'time_utc'
+      - 'beat'
+
+  - platform: history_stats
+    name: Climate kontor heating today
+    entity_id: sensor.climate_kontor_hvac_action
+    state: 'heating'
+    type: time
+    start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+    end: '{{ now() }}'
+
+  - platform: history_stats
+    name: Climate stua heating today
+    entity_id: sensor.climate_stua_hvac_action
+    state: 'heating'
+    type: time
+    start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+    end: '{{ now() }}'
+
+  - platform: history_stats
+    name: Climate soverom heating today
+    entity_id: sensor.climate_soverom_hvac_action
+    state: 'heating'
+    type: time
+    start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+    end: '{{ now() }}'
+
+  - platform: nordpool
+    price_in_cents: true
+    region: "Tr.heim"
+    precision: 3
+    price_type: kWh
+
+  - platform: integration
+    source: sensor.vaskemaskin_power
+    name: vaskemaskin_consumption
+    unit_prefix: k
+    round: 2
+
+binary_sensor:
+  - platform: rest
+    name: Stua open window active
+    resource: http://10.9.8.30/open-window
+    method: GET
+    value_template: '{{value_json.active_now}}'
+
+  - platform: rest
+    name: Kontor open window active
+    resource: http://10.9.8.31/open-window
+    method: GET
+    value_template: '{{value_json.active_now}}'
+
+utility_meter:
+  kontor_heating_time_daily:
+    source: sensor.climate_kontor_heating_today
+    name: Kontor Heating Time Daily
+    cycle: daily
+  kontor_heating_time_weekly:
+    source: sensor.climate_kontor_heating_today
+    name: Kontor Heating Time Weekly
+    cycle: weekly
+  kontor_heating_time_monthly:
+    source: sensor.climate_kontor_heating_today
+    name: Kontor Heating Time Monthly
+    cycle: monthly
+  kontor_heating_time_yearly:
+    source: sensor.climate_kontor_heating_today
+    name: Kontor Heating Time Yearly
+    cycle: yearly
+  stua_heating_time_daily:
+    source: sensor.climate_stua_heating_today
+    name: Stua Heating Time Daily
+    cycle: daily
+  stua_heating_time_weekly:
+    source: sensor.climate_stua_heating_today
+    name: Stua Heating Time Weekly
+    cycle: weekly
+  stua_heating_time_monthly:
+    source: sensor.climate_stua_heating_today
+    name: Stua Heating Time Monthly
+    cycle: monthly
+  stua_heating_time_yearly:
+    source: sensor.climate_stua_heating_today
+    name: Stua Heating Time Yearly
+    cycle: yearly
+  soverom_heating_time_weekly:
+    source: sensor.climate_soverom_heating_today
+    name: Soverom Heating Time Weekly
+    cycle: weekly
+  soverom_heating_time_monthly:
+    source: sensor.climate_soverom_heating_today
+    name: Soverom Heating Time Monthly
+    cycle: monthly
+  soverom_heating_time_yearly:
+    source: sensor.climate_soverom_heating_today
+    name: Soverom Heating Time Yearly
+    cycle: yearly
+
+rest_command:
+  healthcheck_io:
+    url: https://hc-ping.com/b54bbee3-7933-4e84-b883-b8af56716670
+
+#logger:
+#  default: debug

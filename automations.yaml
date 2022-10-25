@@ -1,0 +1,523 @@
+- id: '1612816203699'
+  alias: Turn off lights when Apple TV plays movie
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - media_player.stue
+    to: playing
+    for:
+      seconds: 2
+  condition:
+  - condition: and
+    conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: media_player.stue
+        attribute: app_id
+        state: com.netflix.Netflix
+      - condition: state
+        entity_id: media_player.stue
+        attribute: app_id
+        state: com.plexapp.plex
+      - condition: state
+        entity_id: media_player.stue
+        attribute: app_id
+        state: com.apple.TVWatchList
+      - condition: state
+        entity_id: media_player.stue
+        attribute: app_id
+        state: com.firecore.infuse
+    - condition: numeric_state
+      entity_id: media_player.stue
+      attribute: media_duration
+      above: 3000
+  action:
+  - service: scene.create
+    data:
+      scene_id: before_film_stua
+      snapshot_entities:
+      - light.hjorne
+      - light.ikea_lampe
+      - light.spisebord
+      - light.oy
+      - light.spotter
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id:
+      - switch.adaptive_lighting_hjorne
+      manual_control: true
+  - service: scene.turn_on
+    target:
+      entity_id: scene.film
+    metadata: {}
+  - service: input_boolean.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.lights_dimmed_by_movie_mode
+  mode: restart
+- id: '1612816203700'
+  alias: Turn on lights when Apple TV stops playing
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - media_player.stue
+    from: playing
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 15
+  condition:
+  - condition: state
+    entity_id: input_boolean.lights_dimmed_by_movie_mode
+    state: 'on'
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.before_film_stua
+    data: {}
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id:
+      - switch.adaptive_lighting_hjorne
+      manual_control: false
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.lights_dimmed_by_movie_mode
+    data: {}
+  mode: restart
+- id: '1634676373160'
+  alias: Wakeup Soverom
+  description: ''
+  trigger:
+  - platform: event
+    event_type: WAKEUP_SOVEROM
+  action:
+  - service: input_boolean.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.alarm_triggered_today
+  - parallel:
+    - sequence:
+      - service: light.turn_on
+        target:
+          entity_id: light.soveromslampe
+        data:
+          brightness: 0
+      - service: light.turn_on
+        target:
+          entity_id: light.soveromslampe
+        data:
+          brightness: 255
+          transition: 1200
+      alias: Fade inn lys på soverom
+    - sequence:
+      - service: media_player.volume_set
+        continue_on_error: true
+        target:
+          entity_id: media_player.soverom
+        data:
+          volume_level: 0.07
+      - repeat:
+          count: '5'
+          sequence:
+          - if:
+            - condition: not
+              conditions:
+              - condition: device
+                device_id: d08f2de88380e738d51d27b9e5747bb8
+                domain: media_player
+                entity_id: media_player.soverom
+                type: is_playing
+            then:
+            - service: media_player.play_media
+              continue_on_error: true
+              target:
+                entity_id: media_player.soverom
+              data:
+                media_content_id: FV:2/8
+                media_content_type: favorite_item_id
+              metadata:
+                title: NRK P3
+                thumbnail: http://cdn-profiles.tunein.com/s26044/images/logoq.png?t=154963
+                media_class: genre
+                children_media_class:
+                navigateIds:
+                - {}
+                - media_content_type: favorites
+                  media_content_id: ''
+                - media_content_type: favorites_folder
+                  media_content_id: object.item.audioItem.audioBroadcast
+            - delay:
+                hours: 0
+                minutes: 0
+                seconds: 5
+                milliseconds: 0
+      alias: Slå på Sonos på soverom
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - service: script.1661806381402
+    continue_on_error: true
+    data:
+      tts_entity: media_player.soverom
+      message: '{% set forecast = state_attr(''weather.home'', ''forecast'')[0] %}
+        God morgen! I dag blir det {% if forecast.condition == "cloudy"  %} skyet
+        {% elif forecast.condition == "partlycloudy" %} delvis skyet {% elif forecast.condition
+        == "clearsky" %} skyfritt {% elif forecast.condition == "rain" %} regn {%
+        elif forecast.condition == "sunny" %} sol {% elif forecast.condition == "rainy"
+        %} regn {% else %} {{ forecast.condition }} {% endif %} med  temperaturer
+        mellom {{ forecast.templow }} og {{ forecast.temperature }} grader. Ha en
+        fin dag!
+
+        '
+      language: 'no'
+    enabled: true
+  - delay:
+      hours: 0
+      minutes: 9
+      seconds: 30
+      milliseconds: 0
+  - service: scene.turn_on
+    target:
+      entity_id: scene.stue_og_kjokken_pa
+    metadata: {}
+    enabled: false
+  - service: light.turn_on
+    data: {}
+    target:
+      entity_id: light.kjokken_og_stuelys
+  - delay:
+      hours: 1
+      minutes: 50
+      seconds: 0
+      milliseconds: 0
+  - service: media_player.media_stop
+    data: {}
+    target:
+      entity_id: media_player.soverom
+  mode: restart
+- id: '1662475420588'
+  alias: Plex remote started playing notification
+  trigger:
+  - platform: state
+    entity_id:
+    - media_player.plex_torgeirthoresen_plex_for_android_tv_4k_led_tv_powered_by_android
+    - media_player.plex_torgeirthoresen_plex_for_ios_torgeir_s_iphone_252
+    - media_player.plex_pedervl_plex_for_apple_tv_stua
+    - media_player.plex_pedervl_plex_for_mac_bekk_mac_02489
+    from:
+    - idle
+    - unavailable
+    to: playing
+  action:
+  - service: notify.mobile_app_dagphone
+    data:
+      title: Playing on {{ device }}
+      message: "{% if series == None %}\n  {{ title }}\n{% else %}\n  {{ series }}
+        - {{ title }}\n{% endif %}\n"
+      data:
+        icon_url: '{{ picture }}'
+  mode: single
+  variables:
+    device: '{{ state_attr(trigger.entity_id, ''friendly_name'') }}'
+    series: '{{ state_attr(trigger.entity_id, ''media_series_title'') }}'
+    title: '{{ state_attr(trigger.entity_id, ''media_title'') }}'
+    picture: '{{ state_attr(trigger.entity_id, ''entity_picture'') }}'
+- id: '1662476129447'
+  alias: Plex remote playing
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.tautulli_wan_bandwidth
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    above: 2000
+  action:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.transmission_turtle_mode
+  mode: single
+- id: '1663777219467'
+  alias: Notify unavailable entities
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - media_player.soverom
+    - media_player.sonos_stue
+    - media_player.kjokken
+    - light.soveromslampe
+    - light.hue_filament_bulb_1
+    - light.ikea_lampe
+    - light.spisebord
+    - sensor.plex_nas
+    to: unavailable
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition: []
+  action:
+  - service: notify.mobile_app_dagphone
+    data:
+      title: Device offline!
+      message: "\U0001F4F5 {{ state_attr(trigger.to_state.entity_id, 'friendly_name')
+        }} is offline more than 5 minutes!\n"
+      data:
+        channel: Notfall
+        priority: high
+        ttl: 0
+        color: red
+  mode: single
+- id: '1664382480728'
+  alias: Plex remote idle
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.tautulli_wan_bandwidth
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+    below: 1000
+  condition:
+  - condition: state
+    entity_id: switch.transmission_turtle_mode
+    state: 'on'
+  action:
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.transmission_turtle_mode
+  mode: single
+- id: '1664829735021'
+  alias: Prescence iOS
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: prescence-ios-NlWi7yybjTKsdAPZoy_b0irc
+  condition: []
+  action:
+  - service: device_tracker.see
+    data_template:
+      dev_id: '{{ trigger.json.tracker_name }}'
+      location_name: '{{ trigger.json.location_name }}'
+      gps_accuracy: 80
+  - service: notify.mobile_app_dagphone
+    data:
+      message: Prescence ios triggered
+    enabled: false
+  mode: single
+- id: '1664910648930'
+  alias: Everyone left home
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: zone.home
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+    below: 1
+  condition: []
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.alle_lys_av
+    metadata: {}
+  - service: media_player.media_stop
+    data: {}
+    target:
+      entity_id:
+      - media_player.kjokken
+      - media_player.stue
+      - media_player.soverom
+      - media_player.sonos_stue
+  - service: media_player.turn_off
+    data: {}
+    target:
+      entity_id: media_player.samsung_q90_series_55
+    enabled: false
+  - if:
+    - condition: state
+      entity_id: input_boolean.alarm_triggered_today
+      state: 'on'
+    - condition: time
+      weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+    then:
+    - service: script.set_kontor_preferred_temperature
+      data:
+        type: Sleep
+    - service: script.set_stua_preferred_temperature
+      data:
+        type: Sleep
+    - service: script.set_soverom_preferred_temperature
+      data:
+        type: Sleep
+  mode: single
+- id: '1664910808088'
+  alias: Someone arrives home
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: zone.home
+    above: 0
+  condition: []
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.lyst
+    metadata: {}
+    enabled: false
+  - service: light.turn_on
+    data: {}
+    target:
+      entity_id: light.kjokken_og_stuelys
+  - service: notify.mobile_app_dagphone
+    data:
+      message: Someone arrived home
+    enabled: false
+  - if:
+    - condition: time
+      before: '23:00:00'
+    then:
+    - service: script.set_kontor_preferred_temperature
+      data:
+        type: Comfort
+    - service: script.set_stua_preferred_temperature
+      data:
+        type: Comfort
+    alias: Enable heating if time less than 23
+  mode: single
+- id: '1665747004941'
+  alias: Stue bryter Controller
+  description: ''
+  use_blueprint:
+    path: EPMatt/philips_324131092621.yaml
+    input:
+      integration: Zigbee2MQTT
+      controller_entity: sensor.stue_bryter_action
+      helper_last_controller_event: input_text.stue_bryter_helper_last_controller_event
+      action_button_on_short:
+      - service: light.turn_on
+        data: {}
+        target:
+          entity_id: light.kjokkenlys
+        enabled: false
+      action_button_off_short:
+      - service: light.turn_off
+        data: {}
+        target:
+          entity_id: light.kjokkenlys
+        enabled: false
+      helper_debounce_delay: 50
+      helper_double_press_delay: 500
+- id: '1665747184275'
+  alias: Stue bryter hook
+  description: ''
+  use_blueprint:
+    path: EPMatt/light.yaml
+    input:
+      controller_entity: sensor.stue_bryter_action
+      controller_model: Philips 324131092621 Hue Dimmer switch
+      light: light.kjokken_og_stuelys
+      force_brightness: false
+      on_brightness: 255
+      light_color_mode: None
+      brightness_steps_long: 10
+      brightness_steps_short: 10
+      light_transition: 1000
+- id: '1665928182281'
+  alias: Ping Healthcheck.io
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  condition: []
+  action:
+  - service: rest_command.healthcheck_io
+    data: {}
+  mode: single
+- id: '1666285052761'
+  alias: Climate Open Window Stua
+  description: ''
+  use_blueprint:
+    path: climate_open_window.yaml
+    input:
+      climate_entity: climate.stua
+      window_entity: binary_sensor.verandador_contact
+      temperature_before_window_open_entity: input_number.climate_stua_window_open_temperature
+      temperature_when_window_open: 5
+- id: '1666439583401'
+  alias: Climate Open Window Soverom
+  description: ''
+  use_blueprint:
+    path: climate_open_window.yaml
+    input:
+      climate_entity: climate.soverom
+      window_entity: binary_sensor.soveromsvindu_contact
+      temperature_before_window_open_entity: input_number.climate_soverom_window_open_temperature
+      temperature_when_window_open: 14
+- id: '1666439621141'
+  alias: Climate Open Window Kontor
+  description: ''
+  use_blueprint:
+    path: climate_open_window.yaml
+    input:
+      climate_entity: climate.kontor
+      window_entity: binary_sensor.kontorvindu_contact
+      temperature_before_window_open_entity: input_number.climate_kontor_window_open_temperature
+- id: '1666544052832'
+  alias: Climate kontor preferred temperature
+  description: ''
+  use_blueprint:
+    path: climate_preferred_temperature.yaml
+    input:
+      climate_entity: climate.kontor
+      window_entity: binary_sensor.kontorvindu_contact
+      preferred_temperature_entity: input_number.climate_kontor_preferred_temperature
+      temperature_when_window_open_entity: input_number.climate_kontor_window_open_temperature
+- id: '1666724900771'
+  alias: Climate stua preferred temperature
+  description: ''
+  use_blueprint:
+    path: climate_preferred_temperature.yaml
+    input:
+      climate_entity: climate.stua
+      window_entity: binary_sensor.verandador_contact
+      preferred_temperature_entity: input_number.climate_stua_preferred_temperature
+      temperature_when_window_open_entity: input_number.climate_stua_window_open_temperature
+- id: '1666725567409'
+  alias: Reset entities at midnight
+  description: ''
+  trigger:
+  - platform: time
+    at: 00:00:00
+  condition: []
+  action:
+  - service: input_boolean.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.alarm_triggered_today
+  mode: single
+- id: '1666728541561'
+  alias: Climate soverom preferred temperature
+  description: ''
+  use_blueprint:
+    path: climate_preferred_temperature.yaml
+    input:
+      climate_entity: climate.soverom
+      window_entity: binary_sensor.soveromsvindu_contact
+      preferred_temperature_entity: input_number.climate_soverom_preferred_temperature
+      temperature_when_window_open_entity: input_number.climate_kontor_window_open_temperature

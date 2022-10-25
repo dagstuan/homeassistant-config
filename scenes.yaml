@@ -1,0 +1,427 @@
+- id: '1661803720765'
+  name: Morgenlys i stua
+  entities:
+    light.oy:
+      supported_color_modes:
+      - brightness
+      friendly_name: Øy
+      supported_features: 0
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+    light.spotter:
+      supported_color_modes:
+      - brightness
+      friendly_name: Spotter
+      supported_features: 0
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+    light.ikea_lampe:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: IKEA-Lampe
+      supported_features: 44
+      color_mode: color_temp
+      brightness: 255
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 167
+      - 89
+      xy_color:
+      - 0.524
+      - 0.387
+      color_temp: 366
+      state: 'on'
+    light.spisebord:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: Spisebord
+      supported_features: 44
+      color_mode: color_temp
+      brightness: 255
+      hs_color:
+      - 28.327
+      - 64.71
+      rgb_color:
+      - 255
+      - 167
+      - 89
+      xy_color:
+      - 0.524
+      - 0.387
+      color_temp: 366
+      state: 'on'
+    light.hjorne:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - brightness
+      friendly_name: Hjørne
+      supported_features: 44
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+  icon: mdi:lightbulb
+  metadata: {}
+- id: '1662728331673'
+  name: Film i stua
+  entities:
+    light.oy:
+      supported_color_modes:
+      - brightness
+      friendly_name: Øy
+      supported_features: 0
+      state: 'off'
+    light.spotter:
+      supported_color_modes:
+      - brightness
+      friendly_name: Spotter
+      supported_features: 0
+      state: 'off'
+    light.ikea_lampe:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: IKEA-Lampe
+      supported_features: 44
+      color_mode: color_temp
+      brightness: 76
+      color_temp: 369
+      hs_color:
+      - 28.373
+      - 65.405
+      rgb_color:
+      - 255
+      - 167
+      - 88
+      xy_color:
+      - 0.524
+      - 0.388
+      state: 'on'
+    light.spisebord:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: Spisebord
+      supported_features: 44
+      color_mode: color_temp
+      brightness: 79
+      hs_color:
+      - 28.373
+      - 65.405
+      rgb_color:
+      - 255
+      - 167
+      - 88
+      xy_color:
+      - 0.524
+      - 0.388
+      color_temp: 369
+      state: 'on'
+    light.hjorne:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - brightness
+      friendly_name: Hjørne
+      supported_features: 44
+      state: 'off'
+  icon: mdi:movie
+  metadata: {}
+- id: '1662728702944'
+  name: Avslapning i stua
+  entities:
+    light.oy:
+      supported_color_modes:
+      - brightness
+      friendly_name: Øy
+      supported_features: 0
+      state: 'off'
+    light.spotter:
+      supported_color_modes:
+      - brightness
+      friendly_name: Spotter
+      supported_features: 0
+      color_mode: brightness
+      brightness: 102
+      state: 'on'
+    light.ikea_lampe:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: IKEA-Lampe
+      supported_features: 44
+      color_mode: xy
+      brightness: 142
+      hs_color:
+      - 42.282
+      - 58.431
+      rgb_color:
+      - 255
+      - 211
+      - 106
+      xy_color:
+      - 0.4631
+      - 0.4261
+      state: 'on'
+    light.spisebord:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: Spisebord
+      supported_features: 44
+      color_mode: xy
+      brightness: 142
+      hs_color:
+      - 42.282
+      - 58.431
+      rgb_color:
+      - 255
+      - 211
+      - 106
+      xy_color:
+      - 0.4631
+      - 0.4261
+      state: 'on'
+    light.hjorne:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - brightness
+      friendly_name: Hjørne
+      supported_features: 44
+      color_mode: brightness
+      brightness: 82
+      state: 'on'
+  icon: mdi:sofa-single
+  metadata: {}
+- id: '1662728924802'
+  name: Alle lys av
+  entities:
+    light.oy:
+      supported_color_modes:
+      - brightness
+      friendly_name: Øy
+      supported_features: 0
+      state: 'off'
+    light.spotter:
+      supported_color_modes:
+      - brightness
+      friendly_name: Spotter
+      supported_features: 0
+      state: 'off'
+    light.soveromslampe:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      mode: normal
+      dynamics: none
+      friendly_name: Soveromslampe
+      supported_features: 40
+      state: 'off'
+    light.ikea_lampe:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      mode: normal
+      dynamics: none
+      friendly_name: IKEA-lampe
+      supported_features: 40
+      state: 'off'
+    light.spisebord:
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - xy
+      mode: normal
+      dynamics: none
+      friendly_name: Spisebord
+      supported_features: 40
+      state: 'off'
+    light.hjorne:
+      effect_list:
+      - None
+      - candle
+      supported_color_modes:
+      - brightness
+      mode: normal
+      dynamics: none
+      friendly_name: Hjørne
+      supported_features: 44
+      state: 'off'
+  icon: mdi:lightbulb-off
+  metadata: {}
+- id: '1662729000387'
+  name: Lyst i stua
+  entities:
+    light.oy:
+      supported_color_modes:
+      - brightness
+      friendly_name: Øy
+      supported_features: 0
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+    light.spotter:
+      supported_color_modes:
+      - brightness
+      friendly_name: Spotter
+      supported_features: 0
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+    light.spisebord:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: Spisebord
+      supported_features: 44
+      color_mode: color_temp
+      brightness: 255
+      hs_color:
+      - 28.373
+      - 65.405
+      rgb_color:
+      - 255
+      - 167
+      - 88
+      xy_color:
+      - 0.524
+      - 0.388
+      color_temp: 369
+      state: 'on'
+    light.ikea_lampe:
+      min_mireds: 153
+      max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - color_temp
+      - xy
+      friendly_name: IKEA-Lampe
+      supported_features: 44
+      color_mode: color_temp
+      brightness: 255
+      color_temp: 369
+      hs_color:
+      - 28.373
+      - 65.405
+      rgb_color:
+      - 255
+      - 167
+      - 88
+      xy_color:
+      - 0.524
+      - 0.388
+      state: 'on'
+    light.hjorne:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
+      supported_color_modes:
+      - brightness
+      friendly_name: Hjørne
+      supported_features: 44
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+  icon: mdi:lightbulb-multiple
+  metadata: {}

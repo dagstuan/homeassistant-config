@@ -1,0 +1,2 @@
+sensor.electricity_price_marie_wexelsens_veg_6:
+  device_class: power

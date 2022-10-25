@@ -1,0 +1,71 @@
+blueprint:
+  name: Set preferred temperature
+  domain: script
+  input:
+    preferred_temperature_entity:
+        name: Preferred temperature entity
+        selector:
+          entity:
+            domain: input_number
+    comfort_temperature_entity:
+        name: Comfort temperature entity
+        selector:
+          entity:
+            domain: input_number
+    sleep_temperature_entity:
+        name: Sleep temperature entity
+        selector:
+          entity:
+            domain: input_number
+    away_temperature_entity:
+        name: Away temperature entity
+        selector:
+          entity:
+            domain: input_number
+
+mode: queued
+
+fields:
+  type:
+    description: Temperature type to set
+    selector:
+      select:
+        options:
+          - Comfort
+          - Sleep
+          - Away
+
+variables:
+  input_comfort_temperature_entity: !input comfort_temperature_entity
+  input_sleep_temperature_entity: !input sleep_temperature_entity
+  input_away_temperature_entity: !input away_temperature_entity
+
+sequence:
+  choose:
+  - conditions:
+      - condition: template
+        value_template: "{{ type == 'Comfort' }}"
+    sequence:
+      - service: input_number.set_value
+        data:
+          value: "{{ states(input_comfort_temperature_entity) | float(0) }}"
+        target:
+          entity_id: !input preferred_temperature_entity
+  - conditions:
+      - condition: template
+        value_template: "{{ type == 'Sleep' }}"
+    sequence:
+      - service: input_number.set_value
+        data:
+          value: "{{ states(input_sleep_temperature_entity) | float(0) }}"
+        target:
+          entity_id: !input preferred_temperature_entity
+  - conditions:
+      - condition: template
+        value_template: "{{ type == 'Away' }}"
+    sequence:
+      - service: input_number.set_value
+        data:
+          value: "{{ states(input_away_temperature_entity) | float(0) }}"
+        target:
+          entity_id: !input preferred_temperature_entity
