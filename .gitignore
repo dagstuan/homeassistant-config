@@ -7,7 +7,6 @@
 !.gitignore
 !*.md
 
-
 # Ignore folders.
 .storage
 .cloud

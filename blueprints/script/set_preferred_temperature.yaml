@@ -42,30 +42,41 @@ variables:
 
 sequence:
   choose:
-  - conditions:
-      - condition: template
-        value_template: "{{ type == 'Comfort' }}"
-    sequence:
-      - service: input_number.set_value
-        data:
-          value: "{{ states(input_comfort_temperature_entity) | float(0) }}"
-        target:
-          entity_id: !input preferred_temperature_entity
-  - conditions:
-      - condition: template
-        value_template: "{{ type == 'Sleep' }}"
-    sequence:
-      - service: input_number.set_value
-        data:
-          value: "{{ states(input_sleep_temperature_entity) | float(0) }}"
-        target:
-          entity_id: !input preferred_temperature_entity
-  - conditions:
-      - condition: template
-        value_template: "{{ type == 'Away' }}"
-    sequence:
-      - service: input_number.set_value
-        data:
-          value: "{{ states(input_away_temperature_entity) | float(0) }}"
-        target:
-          entity_id: !input preferred_temperature_entity
+    - conditions:
+        - condition: template
+          value_template: "{{ type == 'Comfort' }}"
+      sequence:
+        - if:
+            - condition: numeric_state
+              entity_id: zone.home
+              below: 1
+          then:
+            - service: input_number.set_value
+              data:
+                value: "{{ states(input_comfort_temperature_entity) | float(0) - 2 }}"
+              target:
+                entity_id: !input preferred_temperature_entity
+          else:
+            - service: input_number.set_value
+              data:
+                value: "{{ states(input_comfort_temperature_entity) | float(0) }}"
+              target:
+                entity_id: !input preferred_temperature_entity
+    - conditions:
+        - condition: template
+          value_template: "{{ type == 'Sleep' }}"
+      sequence:
+        - service: input_number.set_value
+          data:
+            value: "{{ states(input_sleep_temperature_entity) | float(0) }}"
+          target:
+            entity_id: !input preferred_temperature_entity
+    - conditions:
+        - condition: template
+          value_template: "{{ type == 'Away' }}"
+      sequence:
+        - service: input_number.set_value
+          data:
+            value: "{{ states(input_away_temperature_entity) | float(0) }}"
+          target:
+            entity_id: !input preferred_temperature_entity
