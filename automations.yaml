@@ -465,35 +465,6 @@
   - service: rest_command.healthcheck_io
     data: {}
   mode: single
-- id: '1666285052761'
-  alias: Climate Open Window Stua
-  description: ''
-  use_blueprint:
-    path: climate_open_window.yaml
-    input:
-      climate_entity: climate.stua
-      window_entity: binary_sensor.verandador_contact
-      temperature_before_window_open_entity: input_number.climate_stua_window_open_temperature
-      temperature_when_window_open: 5
-- id: '1666439583401'
-  alias: Climate Open Window Soverom
-  description: ''
-  use_blueprint:
-    path: climate_open_window.yaml
-    input:
-      climate_entity: climate.soverom
-      window_entity: binary_sensor.soveromsvindu_contact
-      temperature_before_window_open_entity: input_number.climate_soverom_window_open_temperature
-      temperature_when_window_open: 14
-- id: '1666439621141'
-  alias: Climate Open Window Kontor
-  description: ''
-  use_blueprint:
-    path: climate_open_window.yaml
-    input:
-      climate_entity: climate.kontor
-      window_entity: binary_sensor.kontorvindu_contact
-      temperature_before_window_open_entity: input_number.climate_kontor_window_open_temperature
 - id: '1666544052832'
   alias: Climate kontor preferred temperature
   description: ''
