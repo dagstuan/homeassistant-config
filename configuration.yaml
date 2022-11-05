@@ -265,12 +265,7 @@ sensor:
     region: "Tr.heim"
     precision: 3
     price_type: kWh
-
-  - platform: integration
-    source: sensor.vaskemaskin_power
-    name: vaskemaskin_consumption
-    unit_prefix: k
-    round: 2
+    currency: NOK
 
 binary_sensor:
   - platform: rest
