@@ -358,34 +358,27 @@
       - fri
       before: '15:00:00'
     then:
-    - service: script.set_kontor_preferred_temperature
+    - service: input_select.select_option
       data:
-        type: Sleep
-    - service: script.set_stua_preferred_temperature
+        option: sleep
+      target:
+        entity_id: input_select.stua_temperature_mode
+    - service: input_select.select_option
       data:
-        type: Sleep
-    - service: script.set_soverom_preferred_temperature
-      data:
-        type: Sleep
+        option: sleep
+      target:
+        entity_id: input_select.kontor_temperature_mode
     else:
-    - service: input_number.set_value
+    - service: input_select.select_option
       data:
-        value: '{{ states(''input_number.climate_kontor_preferred_temperature'') |
-          float(0) - 2 }}'
+        option: away
       target:
-        entity_id: input_number.climate_kontor_preferred_temperature
-    - service: input_number.set_value
+        entity_id: input_select.stua_temperature_mode
+    - service: input_select.select_option
       data:
-        value: '{{ states(''input_number.climate_stua_preferred_temperature'') | float(0)
-          - 2 }}'
+        option: away
       target:
-        entity_id: input_number.climate_stua_preferred_temperature
-    - service: input_number.set_value
-      data:
-        value: '{{ states(''input_number.climate_soverom_preferred_temperature'')
-          | float(0) - 2 }}'
-      target:
-        entity_id: input_number.climate_soverom_preferred_temperature
+        entity_id: input_select.kontor_temperature_mode
     alias: Lower home temperature
   mode: single
 - id: '1664910808088'
@@ -414,12 +407,16 @@
     - condition: time
       before: '23:00:00'
     then:
-    - service: script.set_kontor_preferred_temperature
+    - service: input_select.select_option
       data:
-        type: Comfort
-    - service: script.set_stua_preferred_temperature
+        option: comfort
+      target:
+        entity_id: input_select.kontor_temperature_mode
+    - service: input_select.select_option
       data:
-        type: Comfort
+        option: comfort
+      target:
+        entity_id: input_select.stua_temperature_mode
     alias: Enable heating if time less than 23
   mode: single
 - id: '1665747004941'
