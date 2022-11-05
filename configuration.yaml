@@ -28,6 +28,7 @@ recorder:
       - weather
       - person
       - binary_sensor
+      - input_select
     entity_globs:
       - sensor.clock*
       - sensor.date*
@@ -50,6 +51,8 @@ recorder:
       - sensor.vaskemaskin*
       - device_tracker.ios_dag
       - device_tracker.ios_ingvild
+      - sensor.nordpool*
+      - sensor.powersaving*
   db_url: !secret mariadb_url
 
 http:
