@@ -32,7 +32,10 @@
     - condition: numeric_state
       entity_id: media_player.stue
       attribute: media_duration
-      above: 3000
+      above: 2500
+    - condition: state
+      entity_id: input_boolean.lights_dimmed_by_movie_mode
+      state: 'off'
   action:
   - service: scene.create
     data:
