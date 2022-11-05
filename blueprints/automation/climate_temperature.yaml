@@ -1,0 +1,216 @@
+blueprint:
+  name: Climate temperature
+  description: Control climate temperature automatically
+  domain: automation
+  input:
+    climate_entity:
+      name: Climate entity
+      selector:
+        entity:
+          domain: climate
+    window_entity:
+      name: Window entity
+      selector:
+        entity:
+          domain: binary_sensor
+    temperature_mode_entity:
+        name: Temperature mode entity
+        selector:
+          entity:
+            domain: input_select
+    sensor_powersaving_x_most_expensive_hours_entity:
+        name: Powersaving X most expensive hours entity
+        selector:
+          entity:
+            domain: sensor
+    comfort_temperature_entity:
+        name: Comfort temperature entity
+        selector:
+          entity:
+            domain: input_number
+    sleep_temperature_entity:
+        name: Sleep temperature entity
+        selector:
+          entity:
+            domain: input_number
+    away_temperature_entity:
+        name: Away temperature entity
+        selector:
+          entity:
+            domain: input_number
+    vacation_temperature_entity:
+        name: Vacation temperature entity
+        selector:
+          entity:
+            domain: input_number
+    window_open_temperature_entity:
+      name: Window open temperature entity
+      selector:
+        entity:
+          domain: input_number
+
+mode: queued
+
+trigger_variables:
+  input_climate_entity: !input climate_entity
+  input_comfort_temperature_entity: !input comfort_temperature_entity
+  input_sleep_temperature_entity: !input sleep_temperature_entity
+  input_away_temperature_entity: !input away_temperature_entity
+  input_vacation_temperature_entity: !input vacation_temperature_entity
+  input_window_open_temperature_entity: !input window_open_temperature_entity
+trigger:
+  - platform: state
+    entity_id: !input temperature_mode_entity
+    id: temperature-mode-change
+  - platform: state
+    entity_id: !input window_entity
+    to: "on"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 2
+    id: window-changed-to-open
+  - platform: state
+    entity_id: !input window_entity
+    to: "off"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 2
+    id: window-changed-to-closed
+  - platform: state
+    entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+    id: most-expensive-hours-change
+  - platform: state
+    entity_id: !input climate_entity
+    id: climate-temp-change
+    attribute: temperature
+  - platform: state
+    entity_id: !input comfort_temperature_entity
+    id: comfort-temperature-change
+  - platform: state
+    entity_id: !input sleep_temperature_entity
+    id: sleep-temperature-change
+  - platform: state
+    entity_id: !input away_temperature_entity
+    id: away-temperature-change
+  - platform: state
+    entity_id: !input vacation_temperature_entity
+    id: vacation-temperature-change
+  - platform: state
+    entity_id: !input window_open_temperature_entity
+    id: window-open-temperature-change
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input window_entity
+            state: "on"
+        sequence:
+          - service: climate.set_temperature
+            data:
+              temperature: "{{ states(input_window_open_temperature_entity) | float(0) }}"
+            target:
+              entity_id: !input climate_entity
+      - conditions:
+          - condition: trigger
+            id: climate-temp-change
+          - condition: state
+            entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+            state: "False"
+        sequence:
+          - choose:
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: comfort
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input comfort_temperature_entity
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: sleep
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input sleep_temperature_entity
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: away
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input away_temperature_entity
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: vacation
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input vacation_temperature_entity
+    default:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: comfort
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+                    state: "True"
+                then:
+                  - service: climate.set_temperature
+                    data:
+                      temperature: "{{ states(input_comfort_temperature_entity) | float(0) - 1 }}"
+                    target:
+                      entity_id: !input climate_entity
+                else:
+                  - service: climate.set_temperature
+                    data:
+                      temperature: "{{ states(input_comfort_temperature_entity) | float(0) }}"
+                    target:
+                      entity_id: !input climate_entity
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: sleep
+            sequence:
+              - service: climate.set_temperature
+                data:
+                  temperature: "{{ states(input_sleep_temperature_entity) | float(0) }}"
+                target:
+                  entity_id: !input climate_entity
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: away
+            sequence:
+              - service: climate.set_temperature
+                data:
+                  temperature: "{{ states(input_away_temperature_entity) | float(0) }}"
+                target:
+                  entity_id: !input climate_entity
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: vacation
+            sequence:
+              - service: climate.set_temperature
+                data:
+                  temperature: "{{ states(input_vacation_temperature_entity) | float(0) }}"
+                target:
+                  entity_id: !input climate_entity

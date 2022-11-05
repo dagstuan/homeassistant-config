@@ -119,11 +119,30 @@ input_text:
   stue_bryter_helper_last_controller_event:
     name: stue_bryter_helper_last_controller_event
 
+input_select:
+  kontor_temperature_mode:
+    options:
+      - comfort
+      - sleep
+      - away
+      - vacation
+    icon: mdi:target
+  stua_temperature_mode:
+    options:
+      - comfort
+      - sleep
+      - away
+      - vacation
+    icon: mdi:target
+  soverom_temperature_mode:
+    options:
+      - comfort
+      - sleep
+      - away
+      - vacation
+    icon: mdi:target
+
 input_number:
-  climate_kontor_preferred_temperature:
-    min: 0
-    max: 40
-    step: 0.5
   climate_kontor_window_open_temperature:
     min: 0
     max: 40
@@ -140,7 +159,7 @@ input_number:
     min: 0
     max: 40
     step: 0.5
-  climate_stua_preferred_temperature:
+  climate_kontor_vacation_temperature:
     min: 0
     max: 40
     step: 0.5
@@ -160,7 +179,7 @@ input_number:
     min: 0
     max: 40
     step: 0.5
-  climate_soverom_preferred_temperature:
+  climate_stua_vacation_temperature:
     min: 0
     max: 40
     step: 0.5
@@ -177,6 +196,10 @@ input_number:
     max: 40
     step: 0.5
   climate_soverom_away_temperature:
+    min: 0
+    max: 40
+    step: 0.5
+  climate_soverom_vacation_temperature:
     min: 0
     max: 40
     step: 0.5

@@ -468,26 +468,6 @@
   - service: rest_command.healthcheck_io
     data: {}
   mode: single
-- id: '1666544052832'
-  alias: Climate kontor preferred temperature
-  description: ''
-  use_blueprint:
-    path: climate_preferred_temperature.yaml
-    input:
-      climate_entity: climate.kontor
-      window_entity: binary_sensor.kontorvindu_contact
-      preferred_temperature_entity: input_number.climate_kontor_preferred_temperature
-      temperature_when_window_open_entity: input_number.climate_kontor_window_open_temperature
-- id: '1666724900771'
-  alias: Climate stua preferred temperature
-  description: ''
-  use_blueprint:
-    path: climate_preferred_temperature.yaml
-    input:
-      climate_entity: climate.stua
-      window_entity: binary_sensor.verandador_contact
-      preferred_temperature_entity: input_number.climate_stua_preferred_temperature
-      temperature_when_window_open_entity: input_number.climate_stua_window_open_temperature
 - id: '1666725567409'
   alias: Reset entities at midnight
   description: ''
@@ -501,13 +481,104 @@
     target:
       entity_id: input_boolean.alarm_triggered_today
   mode: single
-- id: '1666728541561'
-  alias: Climate soverom preferred temperature
+- id: '1667155963284'
+  alias: Climate kontor temperature
   description: ''
   use_blueprint:
-    path: climate_preferred_temperature.yaml
+    path: climate_temperature.yaml
+    input:
+      climate_entity: climate.kontor
+      window_entity: binary_sensor.kontorvindu_contact
+      temperature_mode_entity: input_select.kontor_temperature_mode
+      sensor_powersaving_x_most_expensive_hours_entity: sensor.powersaving_3_most_expensive
+      comfort_temperature_entity: input_number.climate_kontor_comfort_temperature
+      sleep_temperature_entity: input_number.climate_kontor_sleep_temperature
+      away_temperature_entity: input_number.climate_kontor_away_temperature
+      vacation_temperature_entity: input_number.climate_kontor_vacation_temperature
+      window_open_temperature_entity: input_number.climate_kontor_window_open_temperature
+- id: '1667163320134'
+  alias: Climate stua temperature
+  description: ''
+  use_blueprint:
+    path: climate_temperature.yaml
+    input:
+      climate_entity: climate.stua
+      window_entity: binary_sensor.verandador_contact
+      temperature_mode_entity: input_select.stua_temperature_mode
+      sensor_powersaving_x_most_expensive_hours_entity: sensor.powersaving_3_most_expensive
+      comfort_temperature_entity: input_number.climate_stua_comfort_temperature
+      sleep_temperature_entity: input_number.climate_stua_sleep_temperature
+      away_temperature_entity: input_number.climate_stua_away_temperature
+      vacation_temperature_entity: input_number.climate_stua_vacation_temperature
+      window_open_temperature_entity: input_number.climate_stua_window_open_temperature
+- id: '1667163854348'
+  alias: Climate soverom temperature
+  description: ''
+  use_blueprint:
+    path: climate_temperature.yaml
     input:
       climate_entity: climate.soverom
       window_entity: binary_sensor.soveromsvindu_contact
-      preferred_temperature_entity: input_number.climate_soverom_preferred_temperature
-      temperature_when_window_open_entity: input_number.climate_kontor_window_open_temperature
+      temperature_mode_entity: input_select.soverom_temperature_mode
+      sensor_powersaving_x_most_expensive_hours_entity: sensor.powersaving_3_most_expensive
+      comfort_temperature_entity: input_number.climate_soverom_comfort_temperature
+      sleep_temperature_entity: input_number.climate_soverom_sleep_temperature
+      away_temperature_entity: input_number.climate_soverom_away_temperature
+      vacation_temperature_entity: input_number.climate_soverom_vacation_temperature
+      window_open_temperature_entity: input_number.climate_soverom_window_open_temperature
+- id: '1667288970418'
+  alias: Work from home temperature kontor
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_select.kontor_temperature_mode
+    from: comfort
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    after: 08:00:00
+    before: '16:00:00'
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
+  action:
+  - service: input_select.select_option
+    data:
+      option: comfort
+    target:
+      entity_id: input_select.kontor_temperature_mode
+  mode: single
+- id: '1667289030989'
+  alias: Work from home temperature stua
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_select.stua_temperature_mode
+    from: comfort
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    after: 08:00:00
+    before: '16:00:00'
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
+  action:
+  - service: input_select.select_option
+    data:
+      option: comfort
+    target:
+      entity_id: input_select.stua_temperature_mode
+  mode: single

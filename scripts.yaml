@@ -31,33 +31,3 @@
   variables:
     mediaplayer_volume_level: '{{ state_attr(tts_entity,''volume_level'') }}'
   mode: single
-set_kontor_preferred_temperature:
-  alias: Set kontor preferred temperature
-  use_blueprint:
-    path: set_preferred_temperature.yaml
-    input:
-      preferred_temperature_entity: input_number.climate_kontor_preferred_temperature
-      comfort_temperature_entity: input_number.climate_kontor_comfort_temperature
-      sleep_temperature_entity: input_number.climate_kontor_sleep_temperature
-      away_temperature_entity: input_number.climate_kontor_away_temperature
-  mode: single
-set_stua_preferred_temperature:
-  alias: Set stua preferred temperature
-  use_blueprint:
-    path: set_preferred_temperature.yaml
-    input:
-      preferred_temperature_entity: input_number.climate_stua_preferred_temperature
-      comfort_temperature_entity: input_number.climate_stua_comfort_temperature
-      sleep_temperature_entity: input_number.climate_stua_sleep_temperature
-      away_temperature_entity: input_number.climate_stua_away_temperature
-  mode: single
-set_soverom_preferred_temperature:
-  alias: Set soverom preferred temperature
-  use_blueprint:
-    path: set_preferred_temperature.yaml
-    input:
-      preferred_temperature_entity: input_number.climate_soverom_preferred_temperature
-      comfort_temperature_entity: input_number.climate_soverom_comfort_temperature
-      sleep_temperature_entity: input_number.climate_soverom_sleep_temperature
-      away_temperature_entity: input_number.climate_soverom_away_temperature
-  mode: single
