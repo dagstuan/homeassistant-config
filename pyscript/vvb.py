@@ -10,11 +10,6 @@ hours_on_otherwise = 2
 # How many hours before it should be possible to run again.
 cooldown = 6
 
-def get_consecutive_hour_groups2(hour_price_dict):
-  groups = groupby(enumerate(hour_price_dict), lambda ix : ix[0] - ix[1])
-
-  return [list(map(itemgetter(1), g)) for k,g in groups]
-
 def get_consecutive_hour_groups(hour_price_dict):
   # Create an empty dictionary to store the groups
   groups = {}
@@ -116,4 +111,4 @@ def vvb():
   if len(tomorrow_prices) > 0 and tomorrow_prices[0] is not None:
       hours_on_tomorrow = calc_hours_on(tomorrow_prices, hours_on_at_bottom, hours_on_otherwise, cooldown, ignore_hours)
 
-  state.set("sensor.vvb", current_hour in hours_on_today, new_attributes ={"today_on": hours_on_today, "tomorrow_on": hours_on_tomorrow})
+  state.set("sensor.varmtvannsbereder_on", current_hour in hours_on_today, new_attributes ={"today_on": hours_on_today, "tomorrow_on": hours_on_tomorrow})
