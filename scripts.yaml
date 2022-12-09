@@ -5,11 +5,17 @@
     data:
       entity_id: '{{ tts_entity }}'
       with_group: true
-  - service: media_player.volume_set
-    data:
+  - if:
+      - condition: template
+        value_template: '{{ volume_level is defined and volume_level != none and volume_level|float(0) > 0}}'
+    then:
+      - service: media_player.volume_set
+        data:
+          entity_id: '{{ tts_entity }}'
+          volume_level: '{{ volume_level | float(0) }}'
+  - service: media_player.unjoin
+    target:
       entity_id: '{{ tts_entity }}'
-      volume_level: 0.35
-    enabled: false
   - service: tts.google_translate_say
     data:
       entity_id: '{{ tts_entity }}'
@@ -18,11 +24,7 @@
   - delay: 1
   - alias: Wait until media player is paused
     wait_template: '{{ is_state(tts_entity, ''paused'') }}'
-  - service: media_player.volume_set
-    data:
-      entity_id: '{{ tts_entity }}'
-      volume_level: '{{ mediaplayer_volume_level }}'
-    enabled: false
+    continue_on_timeout: false
   - service: sonos.restore
     data:
       entity_id: '{{ tts_entity }}'

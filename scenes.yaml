@@ -18,6 +18,8 @@
       brightness: 255
       state: 'on'
     light.ikea_lampe:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
       effect_list:
@@ -34,6 +36,8 @@
       supported_features: 44
       color_mode: color_temp
       brightness: 255
+      color_temp_kelvin: 2732
+      color_temp: 366
       hs_color:
       - 28.327
       - 64.71
@@ -44,9 +48,10 @@
       xy_color:
       - 0.524
       - 0.387
-      color_temp: 366
       state: 'on'
     light.spisebord:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
       effect_list:
@@ -63,6 +68,8 @@
       supported_features: 44
       color_mode: color_temp
       brightness: 255
+      color_temp_kelvin: 2732
+      color_temp: 366
       hs_color:
       - 28.327
       - 64.71
@@ -73,7 +80,6 @@
       xy_color:
       - 0.524
       - 0.387
-      color_temp: 366
       state: 'on'
     light.hjorne:
       effect_list:
@@ -87,6 +93,14 @@
       - brightness
       friendly_name: Hjørne
       supported_features: 44
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+    light.gang:
+      supported_color_modes:
+      - brightness
+      friendly_name: Gang
+      supported_features: 40
       color_mode: brightness
       brightness: 255
       state: 'on'
@@ -108,6 +122,8 @@
       supported_features: 0
       state: 'off'
     light.ikea_lampe:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
       effect_list:
@@ -124,6 +140,7 @@
       supported_features: 44
       color_mode: color_temp
       brightness: 76
+      color_temp_kelvin: 2710
       color_temp: 369
       hs_color:
       - 28.373
@@ -137,6 +154,8 @@
       - 0.388
       state: 'on'
     light.spisebord:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
       effect_list:
@@ -153,6 +172,8 @@
       supported_features: 44
       color_mode: color_temp
       brightness: 79
+      color_temp_kelvin: 2710
+      color_temp: 369
       hs_color:
       - 28.373
       - 65.405
@@ -163,7 +184,6 @@
       xy_color:
       - 0.524
       - 0.388
-      color_temp: 369
       state: 'on'
     light.hjorne:
       effect_list:
@@ -178,6 +198,14 @@
       friendly_name: Hjørne
       supported_features: 44
       state: 'off'
+    light.gang:
+      supported_color_modes:
+      - brightness
+      friendly_name: Gang
+      supported_features: 40
+      color_mode: brightness
+      brightness: 64
+      state: 'on'
   icon: mdi:movie
   metadata: {}
 - id: '1662728702944'
@@ -286,48 +314,77 @@
       supported_features: 0
       state: 'off'
     light.soveromslampe:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
       supported_color_modes:
       - color_temp
       - xy
-      mode: normal
-      dynamics: none
       friendly_name: Soveromslampe
-      supported_features: 40
+      supported_features: 44
       state: 'off'
     light.ikea_lampe:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
       supported_color_modes:
       - color_temp
       - xy
-      mode: normal
-      dynamics: none
-      friendly_name: IKEA-lampe
-      supported_features: 40
+      friendly_name: IKEA-Lampe
+      supported_features: 44
       state: 'off'
     light.spisebord:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
       supported_color_modes:
       - color_temp
       - xy
-      mode: normal
-      dynamics: none
       friendly_name: Spisebord
-      supported_features: 40
+      supported_features: 44
       state: 'off'
     light.hjorne:
       effect_list:
-      - None
-      - candle
+      - blink
+      - breathe
+      - okay
+      - channel_change
+      - finish_effect
+      - stop_effect
       supported_color_modes:
       - brightness
-      mode: normal
-      dynamics: none
       friendly_name: Hjørne
       supported_features: 44
+      state: 'off'
+    light.gang:
+      supported_color_modes:
+      - brightness
+      friendly_name: Gang
+      supported_features: 40
       state: 'off'
   icon: mdi:lightbulb-off
   metadata: {}
@@ -351,6 +408,8 @@
       brightness: 255
       state: 'on'
     light.spisebord:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
       effect_list:
@@ -367,6 +426,8 @@
       supported_features: 44
       color_mode: color_temp
       brightness: 255
+      color_temp_kelvin: 2710
+      color_temp: 369
       hs_color:
       - 28.373
       - 65.405
@@ -377,9 +438,10 @@
       xy_color:
       - 0.524
       - 0.388
-      color_temp: 369
       state: 'on'
     light.ikea_lampe:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6535
       min_mireds: 153
       max_mireds: 500
       effect_list:
@@ -396,6 +458,7 @@
       supported_features: 44
       color_mode: color_temp
       brightness: 255
+      color_temp_kelvin: 2710
       color_temp: 369
       hs_color:
       - 28.373
@@ -420,6 +483,14 @@
       - brightness
       friendly_name: Hjørne
       supported_features: 44
+      color_mode: brightness
+      brightness: 255
+      state: 'on'
+    light.gang:
+      supported_color_modes:
+      - brightness
+      friendly_name: Gang
+      supported_features: 40
       color_mode: brightness
       brightness: 255
       state: 'on'

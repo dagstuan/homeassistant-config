@@ -4,7 +4,7 @@
   trigger:
   - platform: state
     entity_id:
-    - media_player.stue
+    - media_player.stua
     to: playing
     for:
       seconds: 2
@@ -14,23 +14,23 @@
     - condition: or
       conditions:
       - condition: state
-        entity_id: media_player.stue
+        entity_id: media_player.stua
         attribute: app_id
         state: com.netflix.Netflix
       - condition: state
-        entity_id: media_player.stue
+        entity_id: media_player.stua
         attribute: app_id
         state: com.plexapp.plex
       - condition: state
-        entity_id: media_player.stue
+        entity_id: media_player.stua
         attribute: app_id
         state: com.apple.TVWatchList
       - condition: state
-        entity_id: media_player.stue
+        entity_id: media_player.stua
         attribute: app_id
         state: com.firecore.infuse
     - condition: numeric_state
-      entity_id: media_player.stue
+      entity_id: media_player.stua
       attribute: media_duration
       above: 2500
     - condition: state
@@ -46,6 +46,7 @@
       - light.spisebord
       - light.oy
       - light.spotter
+      - light.gang
   - service: adaptive_lighting.set_manual_control
     data:
       entity_id:
@@ -66,7 +67,7 @@
   trigger:
   - platform: state
     entity_id:
-    - media_player.stue
+    - media_player.stua
     from: playing
     for:
       hours: 0
@@ -193,7 +194,9 @@
   - service: light.turn_on
     data: {}
     target:
-      entity_id: light.kjokken_og_stuelys
+      entity_id:
+      - light.kjokken_og_stuelys
+      - light.gang
   - delay:
       hours: 1
       minutes: 50
@@ -316,7 +319,8 @@
     data:
       message: Prescence ios triggered
     enabled: false
-  mode: single
+  mode: queued
+  max: 10
 - id: '1664910648930'
   alias: Everyone left home
   description: ''
@@ -344,7 +348,7 @@
   - service: media_player.turn_off
     data: {}
     target:
-      entity_id: media_player.stue
+      entity_id: media_player.stua
   - if:
     - condition: state
       entity_id: input_boolean.alarm_triggered_today
@@ -380,6 +384,27 @@
       target:
         entity_id: input_select.kontor_temperature_mode
     alias: Lower home temperature
+  - if:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.kontorvindu_contact
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.verandador_contact
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.soveromsvindu_contact
+        state: 'on'
+    then:
+    - service: notify.mobile_app_dagphone
+      data:
+        message: Et vindu er fortsatt åpent, men ingen er hjemme!
+        title: Vindu åpent
+    - service: notify.mobile_app_iphone_ingvild
+      data:
+        message: Et vindu er fortsatt åpent, men ingen er hjemme!
+        title: Vindu åpent
   mode: single
 - id: '1664910808088'
   alias: Someone arrives home
@@ -398,7 +423,9 @@
   - service: light.turn_on
     data: {}
     target:
-      entity_id: light.kjokken_og_stuelys
+      entity_id:
+      - light.kjokken_og_stuelys
+      - light.gang
   - service: notify.mobile_app_dagphone
     data:
       message: Someone arrived home
@@ -406,6 +433,7 @@
   - if:
     - condition: time
       before: '23:00:00'
+      after: 06:00:00
     then:
     - service: input_select.select_option
       data:
@@ -547,6 +575,9 @@
   - condition: numeric_state
     entity_id: zone.home
     above: 0
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
   action:
   - service: input_select.select_option
     data:
@@ -575,6 +606,9 @@
   - condition: numeric_state
     entity_id: zone.home
     above: 0
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
   action:
   - service: input_select.select_option
     data:
@@ -582,3 +616,233 @@
     target:
       entity_id: input_select.stua_temperature_mode
   mode: single
+- id: '1668200249026'
+  alias: Soverom bryter Controller
+  description: ''
+  use_blueprint:
+    path: EPMatt/philips_929002398602.yaml
+    input:
+      integration: Zigbee2MQTT
+      controller_entity: sensor.soverom_bryter_action
+      helper_last_controller_event: input_text.soverom_bryter_helper_last_controller_event
+      action_button_on_short: []
+      button_on_double_press: false
+      helper_debounce_delay: 50
+      action_button_off_short:
+      - service: automation.trigger
+        data: {}
+        target:
+          entity_id: automation.toggle_soverom_varme
+- id: '1668200313746'
+  alias: Soverom bryter hook
+  description: ''
+  use_blueprint:
+    path: EPMatt/light.yaml
+    input:
+      controller_entity: sensor.soverom_bryter_action
+      controller_model: Philips 929002398602 Hue Dimmer switch v2
+      light: light.soveromslampe
+      light_transition: 1000
+- id: '1668253573564'
+  alias: Toggle soverom temperature mode
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: input_select.soverom_temperature_mode
+      state: comfort
+    then:
+    - service: script.1661806381402
+      continue_on_error: true
+      data:
+        tts_entity: media_player.soverom
+        message: Greit, jeg skrur ned temperaturen.
+        language: 'no'
+        volume_level: 0.3
+    - service: input_select.select_option
+      data:
+        option: sleep
+      target:
+        entity_id: input_select.soverom_temperature_mode
+    else:
+    - service: script.1661806381402
+      continue_on_error: true
+      data:
+        tts_entity: media_player.soverom
+        message: Greit, jeg skrur opp temperaturen.
+        language: 'no'
+        volume_level: 0.3
+    - service: input_select.select_option
+      data:
+        option: comfort
+      target:
+        entity_id: input_select.soverom_temperature_mode
+  mode: queued
+  max: 10
+- id: '1668442394127'
+  alias: Vacation mode
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.vacation_mode
+    to: 'on'
+    id: vacation_mode_turned_on
+  - platform: state
+    entity_id:
+    - input_boolean.vacation_mode
+    to: 'off'
+    id: vacation_mode_turned_off
+  - platform: time
+    at: input_datetime.vacation_mode_auto_enable
+    id: vacation_mode_auto_on
+  - platform: time
+    at: input_datetime.vacation_mode_auto_off
+    id: vacation_mode_auto_off
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: vacation_mode_turned_on
+      sequence:
+      - service: switch.turn_off
+        target:
+          entity_id: switch.heating_schedules_enabled
+        data: {}
+      - service: input_select.select_option
+        data:
+          option: vacation
+        target:
+          entity_id:
+          - input_select.kontor_temperature_mode
+          - input_select.soverom_temperature_mode
+          - input_select.stua_temperature_mode
+    - conditions:
+      - condition: trigger
+        id: vacation_mode_turned_off
+      sequence:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.heating_schedules_enabled
+        data: {}
+      - service: scheduler.run_action
+        data:
+          entity_id: switch.schedule_kontor_helg
+      - service: scheduler.run_action
+        data:
+          entity_id: switch.schedule_soverom_helg
+      - service: scheduler.run_action
+        data:
+          entity_id: switch.schedule_stua_helg
+      - service: scheduler.run_action
+        data:
+          entity_id: switch.schedule_kontor_ukedager
+      - service: scheduler.run_action
+        data:
+          entity_id: switch.schedule_stua_ukedager
+      - service: scheduler.run_action
+        data:
+          entity_id: switch.schedule_soverom_ukedager
+    - conditions:
+      - condition: trigger
+        id: vacation_mode_auto_on
+      sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.vacation_mode
+        data: {}
+      - service: notify.mobile_app_dagphone
+        data:
+          message: Vacation mode was automatically enabled.
+    - conditions:
+      - condition: trigger
+        id: vacation_mode_auto_off
+      sequence:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.vacation_mode
+        data: {}
+      - service: notify.mobile_app_dagphone
+        data:
+          message: Vacation mode was automatically disabled.
+  mode: queued
+  max: 10
+- id: '1669812228569'
+  alias: Water heater
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.powersaving_12_most_expensive
+    id: most_expensive_hours
+    to: 'True'
+  - platform: state
+    entity_id:
+    - sensor.powersaving_12_most_expensive
+    id: not_most_expensive_hours
+    to: 'False'
+  - platform: time_pattern
+    minutes: /30
+    seconds: '0'
+  - platform: numeric_state
+    entity_id: sensor.han_sensor_power
+    above: 5000
+    id: han_sensor_power
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: han_sensor_power
+        - condition: trigger
+          id: most_expensive_hours
+      sequence:
+      - if:
+        - condition: state
+          entity_id: switch.varmtvannsbereder
+          state: 'on'
+        then:
+        - service: switch.turn_off
+          data: {}
+          target:
+            entity_id: switch.varmtvannsbereder
+        - service: notify.mobile_app_dagphone
+          data:
+            message: Slo av varmtvannsbereder
+    - conditions:
+      - condition: state
+        entity_id: sensor.powersaving_12_most_expensive
+        state: 'False'
+      sequence:
+      - if:
+        - condition: state
+          entity_id: switch.varmtvannsbereder
+          state: 'off'
+        - condition: time
+          before: '21:00:00'
+          weekday:
+          - sun
+          - sat
+          - fri
+          - thu
+          - wed
+          - tue
+          - mon
+        then:
+        - service: switch.turn_on
+          data: {}
+          target:
+            entity_id: switch.varmtvannsbereder
+        - service: notify.mobile_app_dagphone
+          data:
+            message: Slo på varmtvannsbereder
+  mode: queued
+  max: 10

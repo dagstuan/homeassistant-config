@@ -34,9 +34,6 @@ recorder:
       - sensor.date*
       - sensor.time*
       - sensor.electricity*
-      - sensor.month_peak_hour_consumption_hjemme
-      - sensor.monthly_cost_hjemme
-      - sensor.monthly_net_consumption_hjemme
       - sensor.mill*
       - sensor.climate_*
       - sensor.outdoor_temperature
@@ -48,11 +45,14 @@ recorder:
       - sensor.stua*
       - sensor.climate_*
       - sensor.tautulli*
-      - sensor.vaskemaskin*
       - device_tracker.ios_dag
       - device_tracker.ios_ingvild
       - sensor.nordpool*
       - sensor.powersaving*
+      - sensor.han*
+      - sensor.home_consumption*
+      - sensor.varmtvannsbereder*
+      - sensor.gang*
   db_url: !secret mariadb_url
 
 http:
@@ -113,14 +113,22 @@ google_assistant:
         - Hengelys
 
 input_boolean:
+  dag_home:
+    name: Dag home
+  ingvild_home:
+    name: Ingvild home
   lights_dimmed_by_movie_mode:
     name: Lights were dimmed by movie mode
   alarm_triggered_today:
     name: Alarm triggered today
+  dummy_heater_on:
+    name: Heater power ON
 
 input_text:
   stue_bryter_helper_last_controller_event:
     name: stue_bryter_helper_last_controller_event
+  soverom_bryter_helper_last_controller_event:
+    name: soverom_bryter_helper_last_controller_event
 
 input_select:
   kontor_temperature_mode:
@@ -288,24 +296,51 @@ sensor:
     end: '{{ now() }}'
 
   - platform: nordpool
-    price_in_cents: true
     region: "Tr.heim"
     precision: 3
     price_type: kWh
     currency: NOK
+    additional_costs: '{% set s = {
+  "kapasitet_2_5_arlig_kost": 1530,
+  "tibber_maned_kost": 39,
+  "energiledd_dag": 0.15750,
+  "energiledd_natt": 0.07875,
+  "enova": 0.0125,
+  "spotpris": 0.01
+}
+%}
+{% if now().hour >=6 and now().hour <23 %}
+  {{((s.kapasitet_2_5_arlig_kost+(12*s.tibber_maned_kost))/365/24)+s.energiledd_dag+s.enova+s.spotpris|float}}
+{% else %}
+  {{((s.kapasitet_2_5_arlig_kost+(12*s.tibber_maned_kost))/365/24)+s.energiledd_natt+s.enova+s.spotpris|float}}
+{% endif %}'
 
-binary_sensor:
-  - platform: rest
-    name: Stua open window active
-    resource: http://10.9.8.30/open-window
-    method: GET
-    value_template: '{{value_json.active_now}}'
+  - platform: integration
+    source: sensor.mill_kontor_current_power
+    unique_id: mill_kontor_energy
+    name: Mill kontor energy
+    method: left
+    unit_prefix: k
+  - platform: integration
+    source: sensor.mill_stua_current_power
+    unique_id: mill_stua_energy
+    name: Mill stua energy
+    method: left
+    unit_prefix: k
+  - platform: integration
+    source: sensor.mill_soverom_current_power
+    unique_id: mill_soverom_energy
+    name: Mill soverom energy
+    method: left
+    unit_prefix: k
 
-  - platform: rest
-    name: Kontor open window active
-    resource: http://10.9.8.31/open-window
-    method: GET
-    value_template: '{{value_json.active_now}}'
+  - platform: integration
+    source: sensor.han_sensor_power
+    unique_id: home_consumption
+    name: Home consumption
+    method: left
+    unit_prefix: k
+    unit_time: h
 
 utility_meter:
   kontor_heating_time_daily:

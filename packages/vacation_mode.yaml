@@ -1,0 +1,23 @@
+vacation_mode:
+  input_boolean:
+    vacation_mode:
+      name: Vacation mode
+
+  input_datetime:
+    vacation_mode_auto_off:
+      has_date: true
+      has_time: true
+    vacation_mode_auto_enable:
+      has_date: true
+      has_time: true
+
+  switch:
+    - platform: group
+      name: Heating schedules enabled
+      entities:
+        - switch.schedule_kontor_helg
+        - switch.schedule_stua_helg
+        - switch.schedule_soverom_helg
+        - switch.schedule_kontor_ukedager
+        - switch.schedule_stua_ukedager
+        - switch.schedule_soverom_ukedager

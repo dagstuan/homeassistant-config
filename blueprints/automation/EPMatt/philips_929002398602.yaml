@@ -305,14 +305,12 @@ variables:
     zha:
       button_on_short:
       - on_press
-      - on_press_release
       button_on_long:
       - on_hold
       button_on_release:
       - on_long_release
       button_off_short:
       - off_press
-      - off_press_release
       button_off_long:
       - off_hold
       button_off_release:
@@ -332,14 +330,12 @@ variables:
     zigbee2mqtt:
       button_on_short:
       - on_press
-      - on_press_release
       button_on_long:
       - on_hold
       button_on_release:
       - on_hold_release
       button_off_short:
       - off_press
-      - off_press_release
       button_off_long:
       - off_hold
       button_off_release:

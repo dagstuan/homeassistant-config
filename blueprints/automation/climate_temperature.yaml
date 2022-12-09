@@ -168,17 +168,21 @@ action:
                 entity_id: !input temperature_mode_entity
                 state: comfort
             sequence:
-              - if:
-                  - condition: state
-                    entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
-                    state: "True"
-                then:
-                  - service: climate.set_temperature
-                    data:
-                      temperature: "{{ states(input_comfort_temperature_entity) | float(0) - 1 }}"
-                    target:
-                      entity_id: !input climate_entity
-                else:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+                        state: "True"
+                      - condition: numeric_state
+                        entity_id: sensor.nordpool_kwh_trheim_nok_3_10_025
+                        above: 1
+                    sequence:
+                      - service: climate.set_temperature
+                        data:
+                          temperature: "{{ states(input_comfort_temperature_entity) | float(0) - 1 }}"
+                        target:
+                          entity_id: !input climate_entity
+                default:
                   - service: climate.set_temperature
                     data:
                       temperature: "{{ states(input_comfort_temperature_entity) | float(0) }}"
