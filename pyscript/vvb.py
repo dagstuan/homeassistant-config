@@ -3,8 +3,11 @@ import datetime
 # Hours to not run VVB ever.
 ignore_hours = [15, 21, 22, 23]
 
-# How many hours to run when price is at it's lowest
+# How many consecutive hours to run when price is at it's lowest
 hours_on_at_bottom = 4
+
+# How many consecutive hours to run once a day otherwise. The
+# script will attempt to find the lowest price to run.
 hours_on_otherwise = 2
 
 # How many hours before it should be possible to run again.
@@ -111,4 +114,6 @@ def vvb():
   if len(tomorrow_prices) > 0 and tomorrow_prices[0] is not None:
       hours_on_tomorrow = calc_hours_on(tomorrow_prices, hours_on_at_bottom, hours_on_otherwise, cooldown, ignore_hours)
 
-  state.set("sensor.varmtvannsbereder_on", current_hour in hours_on_today, new_attributes ={"today_on": hours_on_today, "tomorrow_on": hours_on_tomorrow})
+  should_be_on_now = current_hour in hours_on_today
+
+  state.set("sensor.varmtvannsbereder_on", should_be_on_now, new_attributes ={"today_on": hours_on_today, "tomorrow_on": hours_on_tomorrow})
