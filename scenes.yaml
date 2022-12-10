@@ -136,8 +136,6 @@
       supported_color_modes:
       - color_temp
       - xy
-      friendly_name: IKEA-Lampe
-      supported_features: 44
       color_mode: color_temp
       brightness: 76
       color_temp_kelvin: 2710
@@ -152,6 +150,8 @@
       xy_color:
       - 0.524
       - 0.388
+      friendly_name: IKEA-Lampe
+      supported_features: 44
       state: 'on'
     light.spisebord:
       min_color_temp_kelvin: 2000
@@ -168,8 +168,6 @@
       supported_color_modes:
       - color_temp
       - xy
-      friendly_name: Spisebord
-      supported_features: 44
       color_mode: color_temp
       brightness: 79
       color_temp_kelvin: 2710
@@ -184,6 +182,8 @@
       xy_color:
       - 0.524
       - 0.388
+      friendly_name: Spisebord
+      supported_features: 44
       state: 'on'
     light.hjorne:
       effect_list:
@@ -201,10 +201,10 @@
     light.gang:
       supported_color_modes:
       - brightness
+      color_mode: brightness
+      brightness: 94
       friendly_name: Gang
       supported_features: 40
-      color_mode: brightness
-      brightness: 64
       state: 'on'
   icon: mdi:movie
   metadata: {}

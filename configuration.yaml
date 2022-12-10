@@ -4,6 +4,7 @@ homeassistant:
   longitude: 10.45704723361333
   unit_system: metric
   time_zone: Europe/Oslo
+  country: "NO"
   external_url: "https://home.dagstuan.com"
   internal_url: "http://nas.local:8123"
   packages: !include_dir_merge_named packages/
@@ -92,6 +93,9 @@ google_assistant:
   project_id: home-assistant-34e7d
   service_account: !include service_account.json
   report_state: true
+  exposed_domains:
+    - light
+    - climate
   entity_config:
     light.spotter:
       name: "Spotter"
@@ -295,6 +299,14 @@ sensor:
     start: '{{ now().replace(hour=0, minute=0, second=0) }}'
     end: '{{ now() }}'
 
+  - platform: history_stats
+    name: Varmtvannsbereder on today
+    entity_id: switch.varmtvannsbereder
+    state: 'on'
+    type: time
+    start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+    end: '{{ now() }}'
+
   - platform: nordpool
     region: "Tr.heim"
     precision: 3
@@ -343,6 +355,10 @@ sensor:
     unit_time: h
 
 utility_meter:
+  home_consumption_hourly:
+    source: sensor.home_consumption
+    name: Home consumption hourly
+    cycle: hourly
   kontor_heating_time_daily:
     source: sensor.climate_kontor_heating_today
     name: Kontor Heating Time Daily

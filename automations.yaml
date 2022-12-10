@@ -775,25 +775,38 @@
   trigger:
   - platform: state
     entity_id:
-    - sensor.powersaving_12_most_expensive
-    id: most_expensive_hours
+    - sensor.varmtvannsbereder_on
+    id: varmtvannsbereder_on_true
     to: 'True'
   - platform: state
     entity_id:
-    - sensor.powersaving_12_most_expensive
-    id: not_most_expensive_hours
+    - sensor.varmtvannsbereder_on
+    id: varmtvannsbereder_on_false
     to: 'False'
   - platform: time_pattern
-    minutes: /30
+    minutes: /10
     seconds: '0'
   - platform: numeric_state
     entity_id: sensor.han_sensor_power
-    above: 5000
+    above: 6000
     id: han_sensor_power
     for:
       hours: 0
-      minutes: 5
-      seconds: 0
+      minutes: 0
+      seconds: 30
+    enabled: true
+  - platform: numeric_state
+    entity_id: sensor.han_sensor_power
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    below: 3500
+    enabled: true
+  - platform: numeric_state
+    entity_id: sensor.home_consumption_hourly
+    above: 4500
+    id: too_much_consumption_current_hour
   condition: []
   action:
   - choose:
@@ -802,8 +815,11 @@
         conditions:
         - condition: trigger
           id: han_sensor_power
+          enabled: true
         - condition: trigger
-          id: most_expensive_hours
+          id: varmtvannsbereder_on_false
+        - condition: trigger
+          id: too_much_consumption_current_hour
       sequence:
       - if:
         - condition: state
@@ -817,25 +833,23 @@
         - service: notify.mobile_app_dagphone
           data:
             message: Slo av varmtvannsbereder
+          enabled: false
     - conditions:
       - condition: state
-        entity_id: sensor.powersaving_12_most_expensive
-        state: 'False'
+        entity_id: sensor.varmtvannsbereder_on
+        state: 'True'
+      - condition: numeric_state
+        entity_id: sensor.han_sensor_power
+        below: 3499.7
+        enabled: true
+      - condition: numeric_state
+        entity_id: sensor.home_consumption_hourly
+        below: 4500
       sequence:
       - if:
         - condition: state
           entity_id: switch.varmtvannsbereder
           state: 'off'
-        - condition: time
-          before: '21:00:00'
-          weekday:
-          - sun
-          - sat
-          - fri
-          - thu
-          - wed
-          - tue
-          - mon
         then:
         - service: switch.turn_on
           data: {}
@@ -844,5 +858,24 @@
         - service: notify.mobile_app_dagphone
           data:
             message: Slo på varmtvannsbereder
+          enabled: false
   mode: queued
   max: 10
+- id: '1670681071215'
+  alias: High power consumption notification
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.home_consumption_hourly
+    above: 4500
+  condition: []
+  action:
+  - service: notify.mobile_app_dagphone
+    data:
+      message: Høyt strømbruk denne timen. Skru ned ting som bruker strøm for å unngå
+        hopp i nettleie.
+  - service: notify.mobile_app_iphone_ingvild
+    data:
+      message: Høyt strømbruk denne timen. Skru ned ting som bruker strøm for å unngå
+        hopp i nettleie.
+  mode: single
