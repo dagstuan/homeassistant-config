@@ -794,7 +794,7 @@
       hours: 0
       minutes: 0
       seconds: 30
-    enabled: true
+    enabled: false
   - platform: numeric_state
     entity_id: sensor.han_sensor_power
     for:
@@ -802,10 +802,10 @@
       minutes: 0
       seconds: 10
     below: 3500
-    enabled: true
+    enabled: false
   - platform: numeric_state
     entity_id: sensor.home_consumption_hourly
-    above: 4500
+    above: 4.2
     id: too_much_consumption_current_hour
   condition: []
   action:
@@ -840,11 +840,11 @@
         state: 'True'
       - condition: numeric_state
         entity_id: sensor.han_sensor_power
-        below: 3499.7
+        below: 3500
         enabled: true
       - condition: numeric_state
         entity_id: sensor.home_consumption_hourly
-        below: 4500
+        below: 4.2
       sequence:
       - if:
         - condition: state
