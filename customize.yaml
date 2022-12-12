@@ -1,2 +1,3 @@
-sensor.electricity_price_marie_wexelsens_veg_6:
-  device_class: power
+climate.bad:
+  max_temp: 100
+  min_temp: 0

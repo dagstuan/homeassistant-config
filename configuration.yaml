@@ -8,6 +8,7 @@ homeassistant:
   external_url: "https://home.dagstuan.com"
   internal_url: "http://nas.local:8123"
   packages: !include_dir_merge_named packages/
+  customize: !include customize.yaml
 
 # Configure a default setup of Home Assistant (frontend, api, etc)
 default_config:
@@ -125,8 +126,6 @@ input_boolean:
     name: Lights were dimmed by movie mode
   alarm_triggered_today:
     name: Alarm triggered today
-  dummy_heater_on:
-    name: Heater power ON
 
 input_text:
   stue_bryter_helper_last_controller_event:
