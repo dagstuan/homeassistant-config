@@ -190,13 +190,7 @@
     target:
       entity_id: scene.stue_og_kjokken_pa
     metadata: {}
-    enabled: false
-  - service: light.turn_on
-    data: {}
-    target:
-      entity_id:
-      - light.kjokken_og_stuelys
-      - light.gang
+    enabled: true
   - delay:
       hours: 1
       minutes: 50
