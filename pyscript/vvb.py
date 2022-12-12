@@ -126,7 +126,7 @@ def calc_hours_to_run(price_hour_array, hours_to_run_at_bottom, hours_to_run_oth
   return hours_to_run
 
 @service
-@time_trigger("cron(*/2 * * * *)")
+@time_trigger("cron(*/45 * * * *)")
 def vvb():
   log.info("Running VVB script.")
 
