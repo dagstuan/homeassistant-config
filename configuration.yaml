@@ -255,6 +255,10 @@ template:
       state: "{{ state_attr('weather.home', 'temperature') }}"
       unit_of_measurement: "°C"
       state_class: measurement
+  - binary_sensor:
+    - name: Varmtvannsbereder drawing power
+      unique_id: varmtvannsbereder_drawing_power
+      state: "{{ states('sensor.varmtvannsbereder_power') |  float > 1 }}"
 
 sensor:
   - platform: systemmonitor
@@ -301,7 +305,7 @@ sensor:
 
   - platform: history_stats
     name: Varmtvannsbereder on today
-    entity_id: switch.varmtvannsbereder
+    entity_id: binary_sensor.varmtvannsbereder_drawing_power
     state: 'on'
     type: time
     start: '{{ now().replace(hour=0, minute=0, second=0) }}'
