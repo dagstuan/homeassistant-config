@@ -2,7 +2,7 @@ import datetime
 import math
 
 # Hours to not run VVB ever.
-hours_to_not_run = [20, 21, 22, 23]
+hours_to_not_run = [21, 22, 23]
 
 # How many consecutive hours to run when price is at it's lowest
 hours_to_run_at_bottom = 4
@@ -42,14 +42,8 @@ def get_consecutive_hour_groups_larger_or_equal_size(hour_price_dict, size):
 # hour in the hours-argument. Expects an array of prices.
 # Filters the hours in hours_not_to_run from the returned
 # array.
-def get_hour_price_dict(hours, hours_to_not_run = []):
-  hour_price_dict = dict(zip(range(len(hours)), hours))
-
-  for hour in hours_to_not_run:
-    if hour in hour_price_dict:
-      del hour_price_dict[hour]
-
-  return hour_price_dict
+def get_hour_price_dict(hours):
+  return dict(zip(range(len(hours)), hours))
 
 def get_cheapest_hours_for_consecutive_hour_group(hour_price_dict, size):
   combinations = [list(range(k, k+size)) for k in hour_price_dict.keys() if k+(size-1) <= max(hour_price_dict)]
@@ -67,7 +61,7 @@ def get_cheapest_hours_for_consecutive_hour_group(hour_price_dict, size):
       return sum([hour_price_dict[h] for h in sum_hours_dict[hour][:hours_to_compare]])
 
     # Find the 4 combinations with the lowest calculated price
-    combinations_to_check = sorted(sum_hours_dict.keys())[:4]
+    combinations_to_check = sorted(sum_hours_dict.keys())[:8]
 
     # Get the first n hours of each group, and check the sum of their price
     # Map to a new dictionary of { price: [all_four_hours] }
@@ -123,13 +117,16 @@ def remove_cheapest_hours_with_cooldown_from_hour_price_dict(hour_price_dict, ch
 def calc_hours_to_run(price_hour_array, hours_to_run_at_bottom, hours_to_run_otherwise, cooldown, hours_to_not_run, threshold_price_skip_other_hours):
   hours_to_run = []
 
-  hour_price_dict = get_hour_price_dict(price_hour_array, hours_to_not_run)
-  (price_cheapest, cheapest_total_hours) = get_cheapest_hours(hour_price_dict, hours_to_run_at_bottom)
+  full_hour_price_dict = get_hour_price_dict(price_hour_array)
+
+  filtered_hour_price_dict = { hour: full_hour_price_dict[hour] for hour in full_hour_price_dict.keys() if not hour in hours_to_not_run }
+
+  (price_cheapest, cheapest_total_hours) = get_cheapest_hours(filtered_hour_price_dict, hours_to_run_at_bottom)
 
   log.info(f"Found cheapest hours {cheapest_total_hours} with average price {price_cheapest / len(cheapest_total_hours)}")
 
   hours_to_run.extend(cheapest_total_hours)
-  new_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(hour_price_dict, cheapest_total_hours, cooldown)
+  new_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(filtered_hour_price_dict, cheapest_total_hours, cooldown)
   (price_other, cheapest_other_hours) = get_cheapest_hours(new_hour_price_dict, hours_to_run_otherwise)
 
   average_price_other_hours = price_other / len(cheapest_other_hours)
@@ -139,7 +136,11 @@ def calc_hours_to_run(price_hour_array, hours_to_run_at_bottom, hours_to_run_oth
   if (average_price_other_hours <= threshold_price_skip_other_hours):
     hours_to_run.extend(cheapest_other_hours)
   else:
-    log.info("Average price for other hours was above threshold. Not running the VVB those hours.")
+    log.warning("Average price for other hours was above threshold. Only running the cheapest single hour ignoring hours to not run.")
+
+    filtered_full_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(full_hour_price_dict, cheapest_total_hours, cooldown)
+
+    hours_to_run.append(min(filtered_full_hour_price_dict, key=filtered_full_hour_price_dict.get))
 
   hours_to_run.sort()
 
