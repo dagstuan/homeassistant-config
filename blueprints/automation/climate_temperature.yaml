@@ -100,7 +100,12 @@ trigger:
   - platform: state
     entity_id: !input window_open_temperature_entity
     id: window-open-temperature-change
-condition: []
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input climate_entity
+        state: unavailable
 action:
   - choose:
       - conditions:
