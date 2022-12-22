@@ -317,17 +317,17 @@ sensor:
     currency: NOK
     additional_costs: '{% set s = {
   "kapasitet_2_5_arlig_kost": 1530,
-  "tibber_maned_kost": 39,
+  "energiselskap_maaned_kost": 0,
   "energiledd_dag": 0.15750,
   "energiledd_natt": 0.07875,
   "enova": 0.0125,
-  "spotpris": 0.01
+  "spotpris": 0
 }
 %}
 {% if now().hour >=6 and now().hour <23 %}
-  {{((s.kapasitet_2_5_arlig_kost+(12*s.tibber_maned_kost))/365/24)+s.energiledd_dag+s.enova+s.spotpris|float}}
+  {{((s.kapasitet_2_5_arlig_kost+(12*s.energiselskap_maaned_kost))/365/24)+s.energiledd_dag+s.enova+s.spotpris|float}}
 {% else %}
-  {{((s.kapasitet_2_5_arlig_kost+(12*s.tibber_maned_kost))/365/24)+s.energiledd_natt+s.enova+s.spotpris|float}}
+  {{((s.kapasitet_2_5_arlig_kost+(12*s.energiselskap_maaned_kost))/365/24)+s.energiledd_natt+s.enova+s.spotpris|float}}
 {% endif %}'
 
   - platform: integration
