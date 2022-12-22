@@ -417,7 +417,11 @@
     target:
       entity_id:
       - light.kjokken_og_stuelys
-      - light.gang
+  - service: light.turn_on
+    data:
+      brightness: 255
+    target:
+      entity_id: light.gang
   - service: notify.mobile_app_dagphone
     data:
       message: Someone arrived home
