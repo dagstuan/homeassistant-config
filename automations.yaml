@@ -859,3 +859,78 @@
       message: Høyt strømbruk denne timen. Skru ned ting som bruker strøm for å unngå
         hopp i nettleie.
   mode: single
+- id: '1671481581350'
+  alias: Sync dag_home with device tracker state
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - device_tracker.ios_dag
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: device_tracker.ios_dag
+      state: home
+    then:
+    - service: input_boolean.turn_on
+      data: {}
+      target:
+        entity_id: input_boolean.dag_home
+    else:
+    - service: input_boolean.turn_off
+      data: {}
+      target:
+        entity_id: input_boolean.dag_home
+  mode: single
+- id: '1671481698965'
+  alias: Sync device trackers on HA startup
+  description: ''
+  trigger:
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: input_boolean.dag_home
+      state: 'on'
+    then:
+    - service: device_tracker.see
+      data:
+        dev_id: ios_dag
+        location_name: home
+  - if:
+    - condition: state
+      entity_id: input_boolean.ingvild_home
+      state: 'on'
+    then:
+    - service: device_tracker.see
+      data:
+        dev_id: ios_ingvild
+        location_name: home
+  mode: single
+- id: '1671481768655'
+  alias: Sync ingvild_home with device tracker state
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - device_tracker.ios_ingvild
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: device_tracker.ios_ingvild
+      state: home
+    then:
+    - service: input_boolean.turn_on
+      data: {}
+      target:
+        entity_id: input_boolean.ingvild_home
+    else:
+    - service: input_boolean.turn_off
+      data: {}
+      target:
+        entity_id: input_boolean.ingvild_home
+  mode: single
