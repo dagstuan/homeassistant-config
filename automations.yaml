@@ -776,30 +776,18 @@
     id: varmtvannsbereder_on_false
     to: 'False'
   - platform: time_pattern
-    minutes: /10
     seconds: '0'
-  - platform: numeric_state
-    entity_id: sensor.han_sensor_power
-    above: 6000
-    id: han_sensor_power
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 30
-    enabled: false
-  - platform: numeric_state
-    entity_id: sensor.han_sensor_power
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 10
-    below: 3500
-    enabled: false
+    minutes: /15
   - platform: numeric_state
     entity_id: sensor.home_consumption_hourly
-    above: 4.2
+    above: 4.7
     id: too_much_consumption_current_hour
-  condition: []
+  condition:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: sensor.varmtvannsbereder_on
+      state: unavailable
   action:
   - choose:
     - conditions:
@@ -807,7 +795,6 @@
         conditions:
         - condition: trigger
           id: han_sensor_power
-          enabled: true
         - condition: trigger
           id: varmtvannsbereder_on_false
         - condition: trigger
@@ -831,12 +818,8 @@
         entity_id: sensor.varmtvannsbereder_on
         state: 'True'
       - condition: numeric_state
-        entity_id: sensor.han_sensor_power
-        below: 3500
-        enabled: true
-      - condition: numeric_state
         entity_id: sensor.home_consumption_hourly
-        below: 4.2
+        below: 4.7
       sequence:
       - if:
         - condition: state
@@ -859,7 +842,7 @@
   trigger:
   - platform: numeric_state
     entity_id: sensor.home_consumption_hourly
-    above: 4500
+    above: 4.6
   condition: []
   action:
   - service: notify.mobile_app_dagphone
