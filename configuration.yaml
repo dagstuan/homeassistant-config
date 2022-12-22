@@ -362,6 +362,30 @@ utility_meter:
     source: sensor.home_consumption
     name: Home consumption hourly
     cycle: hourly
+  home_consumption_daily:
+    source: sensor.home_consumption
+    name: Home consumption daily
+    cycle: daily
+  home_consumption_monthly:
+    source: sensor.home_consumption
+    name: Home consumption monthly
+    cycle: monthly
+  home_consumption_yearly:
+    source: sensor.home_consumption
+    name: Home consumption yearly
+    cycle: daily
+  home_consumption_cost_daily:
+    source: sensor.home_consumption_cost
+    name: Home consumption cost daily
+    cycle: daily
+  home_consumption_cost_monthly:
+    source: sensor.home_consumption_cost
+    name: Home consumption cost monthly
+    cycle: monthly
+  home_consumption_cost_yearly:
+    source: sensor.home_consumption_cost
+    name: Home consumption cost yearly
+    cycle: yearly
   kontor_heating_time_daily:
     source: sensor.climate_kontor_heating_today
     name: Kontor Heating Time Daily
