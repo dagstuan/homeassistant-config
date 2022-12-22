@@ -174,11 +174,9 @@
         {% elif forecast.condition == "partlycloudy" %} delvis skyet {% elif forecast.condition
         == "clearsky" %} skyfritt {% elif forecast.condition == "rain" %} regn {%
         elif forecast.condition == "sunny" %} sol {% elif forecast.condition == "rainy"
-        %} regn {% else %} {{ forecast.condition }} {% endif %} med  temperaturer
-        mellom {{ forecast.templow }} og {{ forecast.temperature }} grader. Ha en
-        fin dag!
-
-        '
+        %} regn {% elif forecast.condition == "snowy" %}  snø {% else %} {{ forecast.condition
+        }} {% endif %} med temperaturer mellom  {{ forecast.templow }} og {{ forecast.temperature
+        }} grader. Ha en fin dag!'
       language: 'no'
     enabled: true
   - delay:
