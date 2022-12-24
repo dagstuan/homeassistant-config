@@ -254,6 +254,11 @@ template:
       state: "{{ state_attr('weather.home', 'temperature') }}"
       unit_of_measurement: "°C"
       state_class: measurement
+    - name: climate_bad_current_power
+      unit_of_measurement: W
+      device_class: power
+      state_class: measurement
+      state: "{{ 775 if is_state_attr ('climate.bad','hvac_action', 'heating') else 0 }}"
   - binary_sensor:
     - name: Varmtvannsbereder drawing power
       unique_id: varmtvannsbereder_drawing_power
@@ -348,11 +353,17 @@ sensor:
     name: Mill soverom energy
     method: left
     unit_prefix: k
-
   - platform: integration
     source: sensor.han_sensor_power
     unique_id: home_consumption
     name: Home consumption
+    method: left
+    unit_prefix: k
+    unit_time: h
+  - platform: integration
+    source: sensor.climate_bad_current_power
+    unique_id: climate_bad_energy
+    name: Climate bad energy
     method: left
     unit_prefix: k
     unit_time: h
