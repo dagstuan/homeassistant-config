@@ -1,0 +1,223 @@
+climate:
+  input_select:
+    kontor_temperature_mode:
+      options:
+        - comfort
+        - sleep
+        - away
+        - vacation
+      icon: mdi:target
+    stua_temperature_mode:
+      options:
+        - comfort
+        - sleep
+        - away
+        - vacation
+      icon: mdi:target
+    soverom_temperature_mode:
+      options:
+        - comfort
+        - sleep
+        - away
+        - vacation
+      icon: mdi:target
+
+  input_number:
+    climate_kontor_window_open_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_kontor_comfort_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_kontor_sleep_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_kontor_away_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_kontor_vacation_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_stua_window_open_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_stua_comfort_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_stua_sleep_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_stua_away_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_stua_vacation_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_soverom_window_open_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_soverom_comfort_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_soverom_sleep_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_soverom_away_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+    climate_soverom_vacation_temperature:
+      min: 0
+      max: 40
+      step: 0.5
+
+  template:
+    - sensor:
+      - name: Climate kontor hvac action
+        state: "{{ state_attr('climate.kontor', 'hvac_action') }}"
+      - name: climate_kontor_heating_state_graph
+        unit_of_measurement: '°C'
+        state: >
+          {% if is_state_attr ('climate.kontor','hvac_action', 'heating') %}
+          {{ state_attr('climate.kontor', 'current_temperature') }}
+          {% else %}
+          0
+          {% endif %}
+      - name: Climate stua hvac action
+        state: "{{ state_attr('climate.stua', 'hvac_action') }}"
+      - name: climate_stua_heating_state_graph
+        unit_of_measurement: '°C'
+        state: >
+          {% if is_state_attr ('climate.stua','hvac_action', 'heating') %}
+          {{ state_attr('climate.stua', 'current_temperature') }}
+          {% else %}
+          0
+          {% endif %}
+      - name: Climate soverom hvac action
+        state: "{{ state_attr('climate.soverom', 'hvac_action') }}"
+      - name: climate_soverom_heating_state_graph
+        unit_of_measurement: '°C'
+        state: >
+          {% if is_state_attr ('climate.soverom','hvac_action', 'heating') %}
+          {{ state_attr('climate.soverom', 'current_temperature') }}
+          {% else %}
+          0
+          {% endif %}
+      - name: climate_bad_current_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ 775 if is_state_attr ('climate.bad','hvac_action', 'heating') else 0 }}"
+
+  sensor:
+    - platform: history_stats
+      name: Climate kontor heating today
+      entity_id: sensor.climate_kontor_hvac_action
+      state: 'heating'
+      type: time
+      start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+      end: '{{ now() }}'
+
+    - platform: history_stats
+      name: Climate stua heating today
+      entity_id: sensor.climate_stua_hvac_action
+      state: 'heating'
+      type: time
+      start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+      end: '{{ now() }}'
+
+    - platform: history_stats
+      name: Climate soverom heating today
+      entity_id: sensor.climate_soverom_hvac_action
+      state: 'heating'
+      type: time
+      start: '{{ now().replace(hour=0, minute=0, second=0) }}'
+      end: '{{ now() }}'
+
+    - platform: integration
+      source: sensor.mill_kontor_current_power
+      unique_id: mill_kontor_energy
+      name: Mill kontor energy
+      method: left
+      unit_prefix: k
+
+    - platform: integration
+      source: sensor.mill_stua_current_power
+      unique_id: mill_stua_energy
+      name: Mill stua energy
+      method: left
+      unit_prefix: k
+
+    - platform: integration
+      source: sensor.mill_soverom_current_power
+      unique_id: mill_soverom_energy
+      name: Mill soverom energy
+      method: left
+      unit_prefix: k
+
+    - platform: integration
+      source: sensor.climate_bad_current_power
+      unique_id: climate_bad_energy
+      name: Climate bad energy
+      method: left
+      unit_prefix: k
+      unit_time: h
+
+  utility_meter:
+    kontor_heating_time_daily:
+      source: sensor.climate_kontor_heating_today
+      name: Kontor Heating Time Daily
+      cycle: daily
+    kontor_heating_time_weekly:
+      source: sensor.climate_kontor_heating_today
+      name: Kontor Heating Time Weekly
+      cycle: weekly
+    kontor_heating_time_monthly:
+      source: sensor.climate_kontor_heating_today
+      name: Kontor Heating Time Monthly
+      cycle: monthly
+    kontor_heating_time_yearly:
+      source: sensor.climate_kontor_heating_today
+      name: Kontor Heating Time Yearly
+      cycle: yearly
+    stua_heating_time_daily:
+      source: sensor.climate_stua_heating_today
+      name: Stua Heating Time Daily
+      cycle: daily
+    stua_heating_time_weekly:
+      source: sensor.climate_stua_heating_today
+      name: Stua Heating Time Weekly
+      cycle: weekly
+    stua_heating_time_monthly:
+      source: sensor.climate_stua_heating_today
+      name: Stua Heating Time Monthly
+      cycle: monthly
+    stua_heating_time_yearly:
+      source: sensor.climate_stua_heating_today
+      name: Stua Heating Time Yearly
+      cycle: yearly
+    soverom_heating_time_weekly:
+      source: sensor.climate_soverom_heating_today
+      name: Soverom Heating Time Weekly
+      cycle: weekly
+    soverom_heating_time_monthly:
+      source: sensor.climate_soverom_heating_today
+      name: Soverom Heating Time Monthly
+      cycle: monthly
+    soverom_heating_time_yearly:
+      source: sensor.climate_soverom_heating_today
+      name: Soverom Heating Time Yearly
+      cycle: yearly
