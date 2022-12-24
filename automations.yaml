@@ -354,6 +354,9 @@
       - fri
       before: '15:00:00'
       after: 00:00:00
+    - condition: state
+      entity_id: automation.vacation_mode
+      state: 'off'
     then:
     - service: input_select.select_option
       data:
@@ -376,7 +379,7 @@
         option: away
       target:
         entity_id: input_select.kontor_temperature_mode
-    alias: Lower home temperature
+    alias: Lower home temperature if not after midnight and vacation mode is not on.
   - if:
     - condition: or
       conditions:
