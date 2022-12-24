@@ -114,10 +114,27 @@ def remove_cheapest_hours_with_cooldown_from_hour_price_dict(hour_price_dict, ch
 
   return hour_price_dict
 
-def calc_hours_to_run(price_hour_array, hours_to_run_at_bottom, hours_to_run_otherwise, cooldown, hours_to_not_run, threshold_price_skip_other_hours):
-  hours_to_run = []
+def calc_hours_to_run_vacation_mode(day, full_hour_price_dict):
+  log.info("Vacation mode enabled. Calculating 5 lowest consecutive hours if the day is even")
 
+  if (day % 2 != 0):
+    log.info("Odd day, not running since vacation mode is enabled")
+    return []
+
+  (price_cheapest, cheapest_hours) = get_cheapest_hours(full_hour_price_dict, 5)
+
+  log.info(f"Found cheapest hours {cheapest_hours} with average price {price_cheapest / len(cheapest_hours)}")
+
+  return cheapest_hours
+
+def calc_hours_to_run(day, vacation_mode_enabled,
+  price_hour_array, hours_to_run_at_bottom,
+  hours_to_run_otherwise, cooldown,
+  hours_to_not_run, threshold_price_skip_other_hours):
   full_hour_price_dict = get_hour_price_dict(price_hour_array)
+
+  if (vacation_mode_enabled):
+    return calc_hours_to_run_vacation_mode(day, full_hour_price_dict)
 
   filtered_hour_price_dict = { hour: full_hour_price_dict[hour] for hour in full_hour_price_dict.keys() if not hour in hours_to_not_run }
 
@@ -125,6 +142,7 @@ def calc_hours_to_run(price_hour_array, hours_to_run_at_bottom, hours_to_run_oth
 
   log.info(f"Found cheapest hours {cheapest_total_hours} with average price {price_cheapest / len(cheapest_total_hours)}")
 
+  hours_to_run = []
   hours_to_run.extend(cheapest_total_hours)
   new_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(filtered_hour_price_dict, cheapest_total_hours, cooldown)
   (price_other, cheapest_other_hours) = get_cheapest_hours(new_hour_price_dict, hours_to_run_otherwise)
@@ -146,20 +164,27 @@ def calc_hours_to_run(price_hour_array, hours_to_run_at_bottom, hours_to_run_oth
 
   return hours_to_run
 
+
 @service
 @time_trigger("cron(*/45 * * * *)")
 def vvb():
   log.info("Running VVB script.")
 
   now = datetime.datetime.now()
+  current_day = now.day
+  tomorrow_day = (datetime.date.today() + datetime.timedelta(days=1)).day
   current_hour = now.hour
 
   nordpool_sensor = sensor.nordpool_kwh_trheim_nok_3_10_025
+
+  vacation_mode_enabled = input_boolean.vacation_mode == "on"
 
   #Get todays prices from nordpool hacs addon. Todays prices should always be available
   today_prices = state.getattr(nordpool_sensor).get("today")
 
   hours_on_today = calc_hours_to_run(
+    current_day,
+    vacation_mode_enabled,
     today_prices,
     hours_to_run_at_bottom,
     hours_to_run_otherwise,
@@ -172,6 +197,8 @@ def vvb():
   #If prices for tomorrow is available
   if tomorrow_prices is not None and len(tomorrow_prices) > 0 and tomorrow_prices[0] is not None:
       hours_on_tomorrow = calc_hours_to_run(
+        tomorrow_day,
+        vacation_mode_enabled,
         tomorrow_prices,
         hours_to_run_at_bottom,
         hours_to_run_otherwise,
