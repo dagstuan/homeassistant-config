@@ -1,0 +1,156 @@
+blueprint:
+  name: Regulator temperature
+  description: Control regulator setting automatically
+  domain: automation
+  input:
+    climate_entity:
+      name: Climate entity
+      selector:
+        entity:
+          domain: climate
+    temperature_mode_entity:
+        name: Temperature mode entity
+        selector:
+          entity:
+            domain: input_select
+    sensor_powersaving_x_most_expensive_hours_entity:
+        name: Powersaving X most expensive hours entity
+        selector:
+          entity:
+            domain: sensor
+    comfort_temperature_entity:
+        name: Comfort setting entity
+        selector:
+          entity:
+            domain: input_number
+    eco_temperature_entity:
+        name: Eco setting entity
+        selector:
+          entity:
+            domain: input_number
+    vacation_temperature_entity:
+        name: Vacation setting entity
+        selector:
+          entity:
+            domain: input_number
+
+mode: queued
+
+trigger_variables:
+  input_climate_entity: !input climate_entity
+  input_comfort_temperature_entity: !input comfort_temperature_entity
+  input_eco_temperature_entity: !input eco_temperature_entity
+  input_vacation_temperature_entity: !input vacation_temperature_entity
+trigger:
+  - platform: state
+    entity_id: !input temperature_mode_entity
+    id: temperature-mode-change
+  - platform: state
+    entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+    id: most-expensive-hours-change
+  - platform: state
+    entity_id: !input climate_entity
+    id: climate-temp-change
+    attribute: temperature
+  - platform: state
+    entity_id: !input comfort_temperature_entity
+    id: comfort-temperature-change
+  - platform: state
+    entity_id: !input eco_temperature_entity
+    id: eco-temperature-change
+  - platform: state
+    entity_id: !input vacation_temperature_entity
+    id: vacation-temperature-change
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input climate_entity
+        state: unavailable
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: climate-temp-change
+          - condition: state
+            entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+            state: "False"
+        sequence:
+          - choose:
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: comfort
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input comfort_temperature_entity
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: eco
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input eco_temperature_entity
+            - conditions:
+                - condition: state
+                  entity_id: !input temperature_mode_entity
+                  state: vacation
+              sequence:
+                - service: input_number.set_value
+                  data:
+                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
+                  target:
+                    entity_id: !input vacation_temperature_entity
+    default:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: comfort
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
+                        state: "True"
+                      - condition: numeric_state
+                        entity_id: sensor.nordpool_kwh_trheim_nok_3_10_025
+                        above: 1
+                    sequence:
+                      - service: climate.set_temperature
+                        data:
+                          temperature: "{{ states(input_comfort_temperature_entity) | float(0) - 15 }}"
+                        target:
+                          entity_id: !input climate_entity
+                default:
+                  - service: climate.set_temperature
+                    data:
+                      temperature: "{{ states(input_comfort_temperature_entity) | float(0) }}"
+                    target:
+                      entity_id: !input climate_entity
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: eco
+            sequence:
+              - service: climate.set_temperature
+                data:
+                  temperature: "{{ states(input_eco_temperature_entity) | float(0) }}"
+                target:
+                  entity_id: !input climate_entity
+          - conditions:
+              - condition: state
+                entity_id: !input temperature_mode_entity
+                state: vacation
+            sequence:
+              - service: climate.set_temperature
+                data:
+                  temperature: "{{ states(input_vacation_temperature_entity) | float(0) }}"
+                target:
+                  entity_id: !input climate_entity

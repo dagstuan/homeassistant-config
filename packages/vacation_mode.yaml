@@ -18,6 +18,8 @@ vacation_mode:
         - switch.schedule_kontor_helg
         - switch.schedule_stua_helg
         - switch.schedule_soverom_helg
+        - switch.schedule_bad_helg
         - switch.schedule_kontor_ukedager
         - switch.schedule_stua_ukedager
         - switch.schedule_soverom_ukedager
+        - switch.schedule_bad_ukedager

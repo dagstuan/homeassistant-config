@@ -707,10 +707,6 @@
       - condition: trigger
         id: vacation_mode_turned_on
       sequence:
-      - service: switch.turn_off
-        target:
-          entity_id: switch.heating_schedules_enabled
-        data: {}
       - service: input_select.select_option
         data:
           option: vacation
@@ -719,32 +715,7 @@
           - input_select.kontor_temperature_mode
           - input_select.soverom_temperature_mode
           - input_select.stua_temperature_mode
-    - conditions:
-      - condition: trigger
-        id: vacation_mode_turned_off
-      sequence:
-      - service: switch.turn_on
-        target:
-          entity_id: switch.heating_schedules_enabled
-        data: {}
-      - service: scheduler.run_action
-        data:
-          entity_id: switch.schedule_kontor_helg
-      - service: scheduler.run_action
-        data:
-          entity_id: switch.schedule_soverom_helg
-      - service: scheduler.run_action
-        data:
-          entity_id: switch.schedule_stua_helg
-      - service: scheduler.run_action
-        data:
-          entity_id: switch.schedule_kontor_ukedager
-      - service: scheduler.run_action
-        data:
-          entity_id: switch.schedule_stua_ukedager
-      - service: scheduler.run_action
-        data:
-          entity_id: switch.schedule_soverom_ukedager
+          - input_select.bad_temperature_mode
     - conditions:
       - condition: trigger
         id: vacation_mode_auto_on
@@ -937,3 +908,15 @@
       target:
         entity_id: input_boolean.ingvild_home
   mode: single
+- id: '1671895454972'
+  alias: Climate bad setting
+  description: ''
+  use_blueprint:
+    path: regulator_temperature.yaml
+    input:
+      climate_entity: climate.bad
+      temperature_mode_entity: input_select.bad_temperature_mode
+      sensor_powersaving_x_most_expensive_hours_entity: sensor.powersaving_3_most_expensive
+      comfort_temperature_entity: input_number.climate_bad_comfort_setting
+      eco_temperature_entity: input_number.climate_bad_eco_setting
+      vacation_temperature_entity: input_number.climate_bad_vacation_setting
