@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, date, timedelta
 import math
 
 # Hours to not run VVB ever.
@@ -164,15 +164,20 @@ def calc_hours_to_run(day, vacation_mode_enabled,
 
   return hours_to_run
 
+def try_parse_datetime(date_string):
+  try:
+    return datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+  except ValueError:
+    return None
 
 @service
 @time_trigger("cron(*/45 * * * *)")
 def vvb():
   log.info("Running VVB script.")
 
-  now = datetime.datetime.now()
+  now = datetime.now()
   current_day = now.day
-  tomorrow_day = (datetime.date.today() + datetime.timedelta(days=1)).day
+  tomorrow_day = (date.today() + timedelta(days=1)).day
   current_hour = now.hour
 
   nordpool_sensor = sensor.nordpool_kwh_trheim_nok_3_10_025
@@ -181,6 +186,13 @@ def vvb():
 
   #Get todays prices from nordpool hacs addon. Todays prices should always be available
   today_prices = state.getattr(nordpool_sensor).get("today")
+
+  # Check if we are within 24 hours of the vacation mode being switched off
+  # Return to normal operations if that is the case.
+  vacation_mode_auto_off = try_parse_datetime(input_datetime.vacation_mode_auto_off)
+  if (vacation_mode_auto_off - now < timedelta(days=1)):
+    log.info("Vacation mode auto off in less than a day. Running VVB normally.")
+    vacation_mode_enabled = False
 
   hours_on_today = calc_hours_to_run(
     current_day,
