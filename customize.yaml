@@ -1,1 +1,3 @@
-
+climate.bad:
+  max_temp: 100
+  min_temp: 0

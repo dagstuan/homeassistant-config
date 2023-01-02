@@ -239,9 +239,3 @@ climate:
       source: sensor.climate_soverom_heating_today
       name: Soverom Heating Time Yearly
       cycle: yearly
-
-homeassistant:
-  customize:
-    climate.bad:
-      max_temp: 100
-      min_temp: 0
