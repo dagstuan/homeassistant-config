@@ -920,3 +920,46 @@
       comfort_temperature_entity: input_number.climate_bad_comfort_setting
       eco_temperature_entity: input_number.climate_bad_eco_setting
       vacation_temperature_entity: input_number.climate_bad_vacation_setting
+- id: '1672609722115'
+  alias: Prescence tracking input booleans
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.dag_home
+    - input_boolean.ingvild_home
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: input_boolean.dag_home
+      state: 'on'
+    then:
+    - service: device_tracker.see
+      data:
+        location_name: home
+        dev_id: ios_dag
+        gps_accuracy: 80
+    else:
+    - service: device_tracker.see
+      data:
+        dev_id: ios_dag
+        location_name: not_home
+        gps_accuracy: 80
+  - if:
+    - condition: state
+      entity_id: input_boolean.ingvild_home
+      state: 'on'
+    then:
+    - service: device_tracker.see
+      data:
+        location_name: home
+        dev_id: ios_ingvild
+        gps_accuracy: 80
+    else:
+    - service: device_tracker.see
+      data:
+        dev_id: ios_ingvild
+        location_name: not_home
+        gps_accuracy: 80
+  mode: queued
