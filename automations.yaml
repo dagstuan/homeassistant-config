@@ -962,3 +962,68 @@
         location_name: not_home
         gps_accuracy: 80
   mode: queued
+- id: '1689443288848'
+  alias: Auto enable vacation mode
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - zone.home
+    to: '0'
+    for:
+      hours: 24
+      minutes: 0
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
+  - condition: numeric_state
+    entity_id: weather.home
+    attribute: temperature
+    above: 0
+    alias: Outside temperature is above 0
+  action:
+  - service: input_boolean.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.vacation_mode
+  - service: notify.mobile_app_dagphone
+    data:
+      message: Feriemodus ble automatisk slått på siden ingen var hjemme på 24 timer.
+      title: Feriemodus slått på
+  - service: notify.mobile_app_iphone_ingvild
+    data:
+      message: Feriemodus ble automatisk slått på siden ingen var hjemme på 24 timer.
+      title: Feriemodus slått på
+  mode: single
+- id: '1689443492296'
+  alias: Vacation mode auto off
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - zone.home
+    from: '0'
+  condition:
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'on'
+    for:
+      hours: 5
+      minutes: 0
+      seconds: 0
+  action:
+  - service: input_boolean.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.vacation_mode
+  - service: notify.mobile_app_dagphone
+    data:
+      title: Feriemodus avslått
+      message: Feriemodus ble automatisk slått av siden noen kom hjem.
+  - service: notify.mobile_app_iphone_ingvild
+    data:
+      title: Feriemodus avslått
+      message: Feriemodus ble automatisk slått av siden noen kom hjem.
+  mode: single
