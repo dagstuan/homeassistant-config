@@ -82,10 +82,6 @@ trigger:
     entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
     id: most-expensive-hours-change
   - platform: state
-    entity_id: !input climate_entity
-    id: climate-temp-change
-    attribute: temperature
-  - platform: state
     entity_id: !input comfort_temperature_entity
     id: comfort-temperature-change
   - platform: state
@@ -118,54 +114,6 @@ action:
               temperature: "{{ states(input_window_open_temperature_entity) | float(0) }}"
             target:
               entity_id: !input climate_entity
-      - conditions:
-          - condition: trigger
-            id: climate-temp-change
-          - condition: state
-            entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
-            state: "False"
-        sequence:
-          - choose:
-            - conditions:
-                - condition: state
-                  entity_id: !input temperature_mode_entity
-                  state: comfort
-              sequence:
-                - service: input_number.set_value
-                  data:
-                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
-                  target:
-                    entity_id: !input comfort_temperature_entity
-            - conditions:
-                - condition: state
-                  entity_id: !input temperature_mode_entity
-                  state: sleep
-              sequence:
-                - service: input_number.set_value
-                  data:
-                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
-                  target:
-                    entity_id: !input sleep_temperature_entity
-            - conditions:
-                - condition: state
-                  entity_id: !input temperature_mode_entity
-                  state: away
-              sequence:
-                - service: input_number.set_value
-                  data:
-                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
-                  target:
-                    entity_id: !input away_temperature_entity
-            - conditions:
-                - condition: state
-                  entity_id: !input temperature_mode_entity
-                  state: vacation
-              sequence:
-                - service: input_number.set_value
-                  data:
-                    value: "{{ state_attr(input_climate_entity, 'temperature') }}"
-                  target:
-                    entity_id: !input vacation_temperature_entity
     default:
       - choose:
           - conditions:
