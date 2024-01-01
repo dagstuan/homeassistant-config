@@ -753,11 +753,12 @@
     id: varmtvannsbereder_on_false
     to: 'False'
   - platform: time_pattern
-    seconds: '0'
     minutes: /15
-  - platform: numeric_state
-    entity_id: sensor.home_consumption_hourly
-    above: 4.7
+    seconds: '10'
+  - alias: When too much consumption current hour
+    platform: template
+    value_template: '{{ (states(''sensor.home_consumption_hourly'') | float(0)) >
+      (states(''input_number.kwh_limit'') | float(0)) }}'
     id: too_much_consumption_current_hour
   condition:
   - condition: not
@@ -794,9 +795,9 @@
       - condition: state
         entity_id: sensor.varmtvannsbereder_on
         state: 'True'
-      - condition: numeric_state
-        entity_id: sensor.home_consumption_hourly
-        below: 4.7
+      - condition: template
+        value_template: '{{ (states(''sensor.home_consumption_hourly'') | float(0))
+          <= (states(''input_number.kwh_limit'') | float(0) * 0.95) }}'
       sequence:
       - if:
         - condition: state
