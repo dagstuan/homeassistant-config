@@ -1,3 +1,13 @@
 climate.bad:
   max_temp: 100
   min_temp: 0
+sensor.ev_charger_consumption_cost_integration:
+  unit_of_measurement: NOK
+sensor.ev_charger_consumption_cost:
+  unit_of_measurement: NOK
+sensor.ev_charger_consumption_cost_daily:
+  unit_of_measurement: NOK
+sensor.ev_charger_consumption_cost_monthly:
+  unit_of_measurement: NOK
+sensor.ev_charger_consumption_cost_yearly:
+  unit_of_measurement: NOK

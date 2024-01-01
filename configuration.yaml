@@ -20,8 +20,8 @@ api:
 nordpool:
 
 recorder:
-  purge_keep_days: 14
-  commit_interval: 10
+  purge_keep_days: 40
+  commit_interval: 5
   include:
     domains:
       - automation
@@ -33,6 +33,10 @@ recorder:
       - person
       - binary_sensor
       - input_select
+    entities:
+      - sensor.outdoor_temperature
+      - device_tracker.ios_dag
+      - device_tracker.ios_ingvild
     entity_globs:
       - sensor.clock*
       - sensor.date*
@@ -40,23 +44,31 @@ recorder:
       - sensor.electricity*
       - sensor.mill*
       - sensor.climate_*
-      - sensor.outdoor_temperature
       - sensor.pi_hole*
-      - sensor.rbr750_gateway*
+      - sensor.rbr750*
       - sensor.speedtest*
       - sensor.kontor*
       - sensor.soverom*
       - sensor.stua*
       - sensor.climate_*
       - sensor.tautulli*
-      - device_tracker.ios_dag
-      - device_tracker.ios_ingvild
       - sensor.nordpool*
       - sensor.powersaving*
       - sensor.han*
       - sensor.home_consumption*
       - sensor.varmtvannsbereder*
       - sensor.gang*
+      - binary_sensor.pingu*
+      - sensor.pingu*
+      - number.pingu*
+      - device_tracker.pingu*
+      - switch.pingu*
+      - sensor.ev_charger*
+      - sensor.other_current_power
+      - sensor.ev_smart_charging_charging
+      - sensor.ev_charger_consumption*
+      - number.ev_charger_installation_available_current
+      - sensor.non_ev*
   db_url: !secret mariadb_url
 
 http:
@@ -135,16 +147,59 @@ input_text:
   soverom_bryter_helper_last_controller_event:
     name: soverom_bryter_helper_last_controller_event
 
+input_number:
+  kwh_limit:
+    name: kWh limit
+    min: 0
+    max: 10
+    step: 0.05
+    unit_of_measurement: kWh
+    mode: box
+  power_limit:
+    name: Power limit
+    min: 0
+    max: 10000
+    unit_of_measurement: W
+    mode: box
+
 template:
   - sensor:
     - name: Outdoor temperature
       state: "{{ state_attr('weather.home', 'temperature') }}"
       unit_of_measurement: "°C"
       state_class: measurement
+    - name: Other current power
+      unique_id: other_current_power
+      state: >
+        {{
+          [((states('sensor.han_sensor_power')| float(0)) -
+          (states('sensor.ev_charger_charge_power') | float(0)) -
+          (states('sensor.varmtvannsbereder_power') | float(0)) -
+          (states('sensor.mill_kontor_current_power') | float(0)) -
+          (states('sensor.mill_stua_current_power') | float(0)) -
+          (states('sensor.mill_soverom_current_power') | float(0)) -
+          (states('sensor.climate_bad_current_power') | float(0)))
+          | round(3), 0] | max
+        }}
+      unit_of_measurement: W
+      state_class: measurement
+      device_class: power
+    - name: Predicted consumption current hour
+      unique_id: predicted_consumption_current_hour
+      state: >-
+        {%- set now=now() -%}
+        {%- set time_left_current_hour=(1 - now.minute / 60 - now.second / 3600)  -%}
+        {%- set consumption_current_hour=states('sensor.home_consumption_hourly') | float(0)  -%}
+        {%- set han_sensor_power_moving_avg_10m=states('sensor.han_sensor_power_moving_avg_10m') | float(0) -%}
+        {%- set predicted_consumption_rest_of_hour=(han_sensor_power_moving_avg_10m/1000.0)*time_left_current_hour -%}
+
+        {{ consumption_current_hour + predicted_consumption_rest_of_hour }}
+      state_class: measurement
+      unit_of_measurement: kWh
   - binary_sensor:
     - name: Varmtvannsbereder drawing power
       unique_id: varmtvannsbereder_drawing_power
-      state: "{{ states('sensor.varmtvannsbereder_power') |  float > 1 }}"
+      state: "{{ states('sensor.varmtvannsbereder_power') | float(0) > 1 }}"
 
 sensor:
   - platform: systemmonitor
@@ -213,6 +268,28 @@ sensor:
     unit_prefix: k
     unit_time: h
 
+  - platform: filter
+    entity_id: sensor.han_sensor_power
+    name: Han sensor power moving avg 10m
+    unique_id: han_sensor_power_moving_avg_10m
+    filters:
+      - filter: lowpass
+        time_constant: 10
+      - filter: time_simple_moving_average
+        window_size: "00:10"
+        precision: 2
+
+  - platform: filter
+    entity_id: sensor.han_sensor_power
+    name: Han sensor power moving avg 30m
+    unique_id: han_sensor_power_moving_avg_30m
+    filters:
+      - filter: lowpass
+        time_constant: 10
+      - filter: time_simple_moving_average
+        window_size: "00:30"
+        precision: 2
+
 utility_meter:
   home_consumption_hourly:
     source: sensor.home_consumption
@@ -247,5 +324,9 @@ rest_command:
   healthcheck_io:
     url: https://hc-ping.com/b54bbee3-7933-4e84-b883-b8af56716670
 
-#logger:
-#  default: debug
+logger:
+  default: warning
+  logs:
+    custom_components.pyscript: warning
+    custom_components.pyscript.file: warning
+    # homeassistant.components.recorder: debug

@@ -818,10 +818,16 @@
   alias: High power consumption notification
   description: ''
   trigger:
-  - platform: numeric_state
-    entity_id: sensor.home_consumption_hourly
-    above: 4.6
-  condition: []
+  - platform: template
+    value_template: '{{ (states(''sensor.home_consumption_hourly'') | float(0)) >
+      (states(''input_number.kwh_limit'') | float(0) * 0.9) }}'
+  condition:
+  - condition: time
+    after: 07:00:00
+    before: '23:00:00'
+  - condition: state
+    entity_id: sensor.ev_smart_charging_charging
+    state: 'off'
   action:
   - service: notify.mobile_app_dagphone
     data:
@@ -1026,4 +1032,579 @@
     data:
       title: Feriemodus avslått
       message: Feriemodus ble automatisk slått av siden noen kom hjem.
+  mode: single
+- id: '1690402291122'
+  alias: Unlock Pingu Charge port
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.pingu_charger
+    enabled: true
+  - service: lock.unlock
+    data: {}
+    target:
+      entity_id: lock.pingu_charge_port_latch
+    enabled: true
+  mode: single
+- id: '1692894070537'
+  alias: EV smart charging EV connected
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.pingu_charger
+    from:
+    to: 'on'
+  - platform: homeassistant
+    event: start
+  condition:
+  - condition: state
+    entity_id: device_tracker.pingu_location_tracker
+    state: home
+  action:
+  - if:
+    - condition: state
+      entity_id: binary_sensor.pingu_charger
+      state: 'on'
+    then:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.ev_smart_charging_ev_connected
+      data: {}
+    else:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.ev_smart_charging_ev_connected
+      data: {}
+  mode: single
+- id: '1695062611146'
+  alias: EV toggle smart charging based on Tesla location tracker
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - device_tracker.pingu_location_tracker
+    from:
+    to:
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - if:
+    - condition: state
+      entity_id: device_tracker.pingu_location_tracker
+      state: home
+    then:
+    - service: switch.turn_on
+      data: {}
+      target:
+        entity_id: switch.ev_smart_charging_smart_charging_activated
+    else:
+    - service: switch.turn_off
+      data: {}
+      target:
+        entity_id: switch.ev_smart_charging_smart_charging_activated
+    - service: switch.turn_on
+      data: {}
+      target:
+        entity_id: switch.pingu_charger
+  mode: single
+- id: '1697652769434'
+  alias: EV charging start notification
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.pingu_charger
+    to: 'on'
+    from:
+  condition:
+  - condition: state
+    entity_id: device_tracker.pingu_location_tracker
+    state: home
+  action:
+  - wait_template: '{{ state_attr(''sensor.ev_smart_charging_charging'', ''Charging
+      start time'') != None }}'
+    continue_on_timeout: true
+    timeout: '10'
+  - service: notify.mobile_app_dagphone
+    data:
+      title: EV Connected
+      message: Charging will start at {{ as_timestamp(states.sensor.ev_smart_charging_charging.attributes["Charging
+        start time"]) | timestamp_custom('%H:%M') }}
+  mode: single
+- id: '1699425309703'
+  alias: EV precondition on battery if electricity price is high and normal SOC
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - climate.pingu_hvac_climate_system
+    to: heat_cool
+  condition:
+  - condition: state
+    entity_id: device_tracker.pingu_location_tracker
+    state: home
+  - condition: state
+    entity_id: binary_sensor.pingu_charger
+    state: 'on'
+  - condition: numeric_state
+    entity_id: sensor.nordpool
+    above: 1.75
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.pingu_charging
+      state: 'on'
+  - alias: Confirm Pingu SOC is normal
+    condition: and
+    conditions:
+    - condition: numeric_state
+      entity_id: sensor.pingu_battery
+      below: 70
+    - condition: numeric_state
+      entity_id: sensor.pingu_battery
+      above: 50
+  action:
+  - service: number.set_value
+    data:
+      value: '0'
+    target:
+      entity_id: number.pingu_charging_amps
+  mode: single
+- id: '1700029700785'
+  alias: EV retry turning climate on
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - climate.pingu_hvac_climate_system
+    from:
+    to: heat_cool
+  condition: []
+  action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - if:
+    - condition: not
+      conditions:
+      - condition: state
+        entity_id: climate.pingu_hvac_climate_system
+        state: heat_cool
+    then:
+    - repeat:
+        sequence:
+        - service: climate.turn_on
+          data: {}
+          target:
+            entity_id: climate.pingu_hvac_climate_system
+        - delay:
+            hours: 0
+            minutes: 0
+            seconds: 20
+            milliseconds: 0
+        until:
+        - condition: or
+          conditions:
+          - condition: state
+            entity_id: climate.pingu_hvac_climate_system
+            state: heat_cool
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 5
+          - condition: template
+            value_template: '{{ repeat.index > 5 }}
+
+              '
+  mode: single
+- id: '1700322556805'
+  alias: EV smart charging - stop Zaptec
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.ev_smart_charging_charging
+    from:
+    to:
+  - platform: state
+    entity_id:
+    - switch.ev_smart_charging_smart_charging_activated
+    from:
+    to: 'on'
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: sensor.ev_smart_charging_charging
+          state: 'on'
+      sequence:
+      - service: number.set_value
+        data:
+          value: '0'
+        target:
+          entity_id: number.ev_charger_installation_available_current
+  mode: restart
+- id: '1701203531307'
+  alias: EV smart charging power adjust Zaptec
+  description: ''
+  trigger:
+  - platform: time_pattern
+    seconds: '59'
+    minutes: /2
+    hours: '*'
+    enabled: true
+  - platform: state
+    entity_id:
+    - sensor.ev_smart_charging_charging
+    from:
+    to: 'on'
+  - platform: state
+    entity_id:
+    - input_number.kwh_limit
+    from:
+    to:
+  - platform: homeassistant
+    event: start
+  - platform: numeric_state
+    entity_id:
+    - sensor.han_sensor_power
+    above: input_number.power_limit
+  - platform: state
+    entity_id:
+    - input_number.power_limit
+  - platform: numeric_state
+    entity_id:
+    - sensor.home_consumption_hourly
+    above: input_number.kwh_limit
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: sensor.ev_smart_charging_charging
+    state: 'on'
+  action:
+  - variables:
+      volts: 230
+      is_same_hour_as_HA_start_hour: '{{ as_datetime(states(''sensor.uptime'')).strftime(''%Y-%m-%d
+        %H:00:00'') == utcnow().strftime(''%Y-%m-%d %H:00:00'') }}'
+      current_charge_limit_amps: '{{ states(''number.ev_charger_installation_available_current'')
+        | int(0) }}'
+      power_used_total: '{{ states(''sensor.han_sensor_power'') | int }}'
+      non_ev_power_now: '{{ states(''sensor.non_ev_current_power'') | int }}'
+      kWh_limit_entity: '{{ states(''input_number.kwh_limit'') | float(0) }}'
+      power_limit_entity: '{{ states(''input_number.power_limit'') | float(9000) }}'
+      kWh_consumption_current_hour: '{{ states(''sensor.home_consumption_hourly'')
+        | float(0) }}'
+      min_amp_limit: '{{ state_attr(''number.ev_charger_installation_available_current'',
+        ''min'') | int(0) }}'
+      max_amp_limit: '{{ state_attr(''number.ev_charger_installation_available_current'',
+        ''max'') | int(16) }}'
+      ev_charger_min_current: '{{ states(''number.ev_charger_charger_min_current'')
+        | float(0) }}'
+      non_ev_power_moving_avg_10m: '{{ states(''sensor.non_ev_power_moving_avg_10m'')
+        | float(0) }}'
+      kWh_limit: '{{ (kWh_limit_entity * 0.9) if is_same_hour_as_HA_start_hour else
+        kWh_limit_entity }}'
+      time_left_current_hour: '{{ 1 - now().minute / 60 - now().second / 3600 }}'
+      non_ev_kWh_consumption_rest_of_hour: '{{ ((non_ev_power_moving_avg_10m / 1000.0)
+        * time_left_current_hour) }}'
+      available_kWh_left_for_charging_current_hour: '{{ [0, kWh_limit - kWh_consumption_current_hour
+        - non_ev_kWh_consumption_rest_of_hour] | max }}'
+      power_charging_rest_of_hour: '{{ (available_kWh_left_for_charging_current_hour
+        / time_left_current_hour) * 1000.0 }}'
+      will_draw_more_power_than_power_limit: '{{ (power_charging_rest_of_hour + non_ev_power_now)
+        > power_limit_entity }}'
+      power_limit_charging: "{%- if will_draw_more_power_than_power_limit -%}\n  {{
+        power_limit_entity - non_ev_power_now }}\n{%- else -%}\n  {{ power_charging_rest_of_hour
+        }}\n{%- endif -%}"
+      new_charge_limit_amps: '{{ (power_limit_charging / volts) | round(0, ''floor'')}}'
+      new_charge_limit: "{%- if new_charge_limit_amps >= ev_charger_min_current -%}\n
+        \ {%- if current_charge_limit_amps == 0 and new_charge_limit_amps < (ev_charger_min_current
+        + 3) -%}\n    0.0\n  {%- else -%}\n    {{ [[new_charge_limit_amps, min_amp_limit]
+        | max, max_amp_limit] | min }}\n  {%- endif -%}\n{%- else -%}\n  0.0\n{%-
+        endif -%}"
+  - if:
+    - condition: template
+      value_template: '{{ states(''number.ev_charger_installation_available_current'')
+        | float(0) != new_charge_limit }}'
+      alias: Zaptec charging amps do not match new_charge_limit
+    then:
+    - service: number.set_value
+      data:
+        value: '{{ new_charge_limit }}'
+      target:
+        entity_id: number.ev_charger_installation_available_current
+      enabled: true
+    alias: Set Zaptec charging amps
+  - if:
+    - condition: state
+      entity_id: binary_sensor.pingu_charging
+      state: 'on'
+    - condition: template
+      value_template: '{{ states(''number.pingu_charging_amps'') | float(0) != new_charge_limit
+        }}'
+      alias: Pingu charging amps do not match new_charge_limit
+    then:
+    - service: number.set_value
+      data:
+        value: '{{ new_charge_limit }}'
+      target:
+        entity_id: number.pingu_charging_amps
+      enabled: true
+    alias: Set Pingu charging amps if Pingu is charging
+    enabled: false
+  mode: single
+- id: '1701639669414'
+  alias: EV smart charging set charge speed based on max kWh
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_number.kwh_limit
+    from:
+    to:
+  - platform: state
+    entity_id:
+    - sensor.ev_smart_charging_charging
+    attribute: Charging number of hours
+  - platform: state
+    entity_id:
+    - sensor.ev_smart_charging_charging
+    attribute: Charging start time
+  - platform: state
+    entity_id:
+    - sensor.ev_smart_charging_charging
+    attribute: Charging stop time
+  - platform: state
+    entity_id:
+    - sensor.varmtvannsbereder_on
+  condition: []
+  action:
+  - service: weather.get_forecasts
+    target:
+      entity_id: weather.home
+    data:
+      type: hourly
+    response_variable: weather_forecast
+  - variables:
+      num_hours_to_charge: '{{ state_attr("sensor.ev_smart_charging_charging", "Charging
+        number of hours") | float(0) }}'
+  - if:
+    - condition: template
+      value_template: '{{ num_hours_to_charge > 0 }}'
+      alias: Hours to charge is more than 0
+    - condition: template
+      value_template: '{{ states(''input_number.kwh_limit'') | float(0) > 3 }}'
+      alias: kWh limit is higher than 3
+    then:
+    - variables:
+        margin: 0.125
+        kWh_battery: 75
+        minimum_temp_modifier: -12
+        minimum_temp_speed_modifier: 0.5
+        kWh_limit: '{{ states(''input_number.kwh_limit'') | float(0) }}'
+        power_limit: '{{ kWh_limit * (1-margin) * 1000 }}'
+        six_amps_power: '{{ 6 * 230 }}'
+        water_heater_power: 2000
+        busy_hour_power: 3000
+        water_heater_hours: "{%- set now=now() -%}\n{{state_attr('sensor.varmtvannsbereder_on',
+          'hours_on_datetime')\n  | default([])\n  | select('gt', now)\n  | map(attribute='hour')\n
+          \ | list\n}}"
+        busy_hours:
+        - 5
+        - 6
+        - 7
+        - 8
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+        - 19
+        - 20
+        - 21
+        - 22
+        forecast_hours: '{{ weather_forecast[''weather.home''][''forecast''] }}'
+        calculated_speeds: "{%- set start_of_hour_now = now().replace(microsecond=0,
+          second=0, minute=0) -%} \n{%- set ns = namespace(speeds=[]) -%}\n{%- for
+          item in state_attr('sensor.ev_smart_charging_charging', 'charging_schedule')
+          -%}\n  {%- if item.start >= start_of_hour_now and item.value > 0.0 -%}\n
+          \   {%- set start_of_hour = item.start.replace(microsecond=0, second=0,
+          minute=0) -%}\n    {%- set hour = item.start.hour -%}\n    {%- set ns.available_charging_power
+          = power_limit -%}\n    {%- set ns.temperature_speed_modifier = 0.0 -%}\n\n
+          \   {%- if hour in busy_hours | map('int') -%}\n      {%- set ns.available_charging_power
+          = ns.available_charging_power - busy_hour_power -%}\n    {%- endif -%}\n\n
+          \   {%- if hour in water_heater_hours | map('int') -%}\n      {%- set ns.available_charging_power
+          = ns.available_charging_power - water_heater_power -%}\n    {%- endif -%}\n\n
+          \   {%- if ns.available_charging_power < six_amps_power -%}\n      {%- set
+          ns.available_charging_power = 0 -%}\n    {%- endif -%}\n\n    {%- for forecast_hour
+          in forecast_hours -%}\n      {%- if forecast_hour['datetime'] | as_datetime
+          == start_of_hour -%}\n        {%- set temperature = forecast_hour['temperature']
+          | float(0) -%}\n        {%- if temperature <= minimum_temp_modifier -%}\n
+          \           {%- set ns.temperature_speed_modifier = minimum_temp_speed_modifier
+          -%}\n        {%- elif temperature < 0 -%}\n            {%- set ns.temperature_speed_modifier
+          = (minimum_temp_speed_modifier / minimum_temp_modifier) * temperature -%}\n
+          \       {%- endif -%}\n      {%- endif -%}\n    {%- endfor -%}\n\n    {%-
+          set speed = ((ns.available_charging_power / 1000 / kWh_battery) * 100) *
+          (1-ns.temperature_speed_modifier) -%}\n    {%- set ns.speeds = ns.speeds
+          + [speed] -%}\n  {%- endif -%}\n{%- endfor -%}\n{{ ns.speeds }}"
+        estimated_speed: '{{ ((calculated_speeds | sum) / (calculated_speeds | length))
+          | round(1, ''floor'') }}'
+    - service: number.set_value
+      data:
+        value: '{{ estimated_speed }}'
+      target:
+        entity_id: number.ev_smart_charging_charging_speed
+      enabled: true
+  mode: single
+  max_exceeded: silent
+- id: '1702760707198'
+  alias: EV Smart charging - set charge completion time
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_datetime.ev_departure_time_monday
+    - input_datetime.ev_departure_time_tuesday
+    - input_datetime.ev_departure_time_wednesday
+    - input_datetime.ev_departure_time_thursday
+    - input_datetime.ev_departure_time_friday
+    - input_datetime.ev_departure_time_saturday
+    - input_datetime.ev_departure_time_sunday
+  - platform: time
+    at: '12:00:01'
+  - platform: homeassistant
+    event: start
+  condition:
+  - condition: time
+    after: '12:00:00'
+  action:
+  - choose:
+    - conditions:
+      - condition: time
+        weekday:
+        - mon
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_tuesday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
+    - conditions:
+      - condition: time
+        weekday:
+        - tue
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_wednesday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
+    - conditions:
+      - condition: time
+        weekday:
+        - wed
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_thursday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
+    - conditions:
+      - condition: time
+        weekday:
+        - thu
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_friday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
+    - conditions:
+      - condition: time
+        weekday:
+        - fri
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_saturday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
+    - conditions:
+      - condition: time
+        weekday:
+        - sat
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_sunday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
+    - conditions:
+      - condition: time
+        weekday:
+        - sun
+      sequence:
+      - variables:
+          option_to_set: "{%- set time = strptime(states('input_datetime.ev_departure_time_monday'),
+            '%H:%M:%S') -%} {%- if time.minute >= 30 -%}\n  {{ time.replace(second=0,
+            microsecond=0, minute=0, hour=time.hour+1).strftime('%H:%M') }}\n{%- else
+            -%}\n  {{ time.replace(second=0, microsecond=0, minute=0).strftime('%H:%M')
+            }}\n{%- endif -%}"
+      - service: select.select_option
+        target:
+          entity_id: select.ev_smart_charging_charge_completion_time
+        data:
+          option: '{{ option_to_set }}'
   mode: single

@@ -1,0 +1,120 @@
+ev:
+  template:
+    - sensor:
+      - name: Pingu state
+        unique_id: pingu_state
+        state: "{{ state_attr('binary_sensor.pingu_online', 'state') }}"
+      - name: EV charger current cost
+        unique_id: ev_charger_current_cost
+        state: "{{ states('sensor.nordpool') | float(0) * states('sensor.ev_charger_charge_power') | float(0) }}"
+        unit_of_measurement: NOK
+      - name: Non EV current power
+        unique_id: non_ev_current_power
+        state: >
+          {{ [(states('sensor.han_sensor_power') | float(0) - states('sensor.ev_charger_charge_power') | float(0)) | round(3), 0] | max }}
+        unit_of_measurement: W
+        state_class: measurement
+        device_class: power
+  sensor:
+    - platform: integration
+      source: sensor.ev_charger_charge_power
+      unique_id: ev_charger_consumption_integration
+      name: EV charger consumption integration
+      method: left
+      unit_prefix: k
+      unit_time: h
+    - platform: integration
+      source: sensor.ev_charger_current_cost
+      unique_id: ev_charger_consumption_cost_integration
+      name: EV charger consumption cost integration
+      method: left
+      unit_prefix: k
+      unit_time: h
+    - platform: filter
+      entity_id: sensor.non_ev_current_power
+      name: Non EV power moving avg 10m
+      unique_id: non_ev_power_moving_avg_10m
+      filters:
+        - filter: lowpass
+          time_constant: 10
+        - filter: time_simple_moving_average
+          window_size: "00:10"
+          precision: 2
+    - platform: filter
+      entity_id: sensor.non_ev_current_power
+      name: Non EV power moving avg 30m
+      unique_id: non_ev_power_moving_avg_30m
+      filters:
+        - filter: lowpass
+          time_constant: 10
+        - filter: time_simple_moving_average
+          window_size: "00:30"
+          precision: 2
+  utility_meter:
+    ev_charger_consumption:
+      unique_id: ev_charger_consumption
+      source: sensor.ev_charger_consumption_integration
+      name: EV charger consumption
+    ev_charger_consumption_daily:
+      unique_id: ev_charger_consumption_daily
+      source: sensor.ev_charger_consumption_integration
+      name: EV charger consumption daily
+      cycle: daily
+    ev_charger_consumption_monthly:
+      unique_id: ev_charger_consumption_monthly
+      source: sensor.ev_charger_consumption_integration
+      name: EV charger consumption monthly
+      cycle: monthly
+    ev_charger_consumption_yearly:
+      unique_id: ev_charger_consumption_yearly
+      source: sensor.ev_charger_consumption_integration
+      name: EV charger consumption yearly
+      cycle: yearly
+    ev_charger_consumption_cost:
+      unique_id: ev_charger_consumption_cost
+      source: sensor.ev_charger_consumption_cost_integration
+      name: EV charger consumption cost
+    ev_charger_consumption_cost_daily:
+      unique_id: ev_charger_consumption_cost_daily
+      source: sensor.ev_charger_consumption_cost_integration
+      name: EV charger consumption cost daily
+      cycle: daily
+    ev_charger_consumption_cost_monthly:
+      unique_id: ev_charger_consumption_cost_monthly
+      source: sensor.ev_charger_consumption_cost_integration
+      name: EV charger consumption cost monthly
+      cycle: monthly
+    ev_charger_consumption_cost_yearly:
+      unique_id: ev_charger_consumption_cost_yearly
+      source: sensor.ev_charger_consumption_cost_integration
+      name: EV charger consumption cost yearly
+      cycle: yearly
+  input_datetime:
+    ev_departure_time_monday:
+      name: EV departure time monday
+      has_date: false
+      has_time: true
+    ev_departure_time_tuesday:
+      name: EV departure time tuesday
+      has_date: false
+      has_time: true
+    ev_departure_time_wednesday:
+      name: EV departure time wednesday
+      has_date: false
+      has_time: true
+    ev_departure_time_thursday:
+      name: EV departure time thursday
+      has_date: false
+      has_time: true
+    ev_departure_time_friday:
+      name: EV departure time friday
+      has_date: false
+      has_time: true
+    ev_departure_time_saturday:
+      name: EV departure time saturday
+      has_date: false
+      has_time: true
+    ev_departure_time_sunday:
+      name: EV departure time sunday
+      has_date: false
+      has_time: true
