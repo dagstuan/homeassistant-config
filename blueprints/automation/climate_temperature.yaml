@@ -127,7 +127,7 @@ action:
                         entity_id: !input sensor_powersaving_x_most_expensive_hours_entity
                         state: "True"
                       - condition: numeric_state
-                        entity_id: sensor.nordpool_kwh_trheim_nok_3_10_025
+                        entity_id: sensor.nordpool
                         above: 1
                     sequence:
                       - service: climate.set_temperature

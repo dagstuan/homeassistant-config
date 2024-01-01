@@ -7,7 +7,7 @@ def update_saving_hours():
 
   log.info("Running power saving script at %s" % now)
 
-  nordpool_sensor = sensor.nordpool_kwh_trheim_nok_3_10_025
+  nordpool_sensor = sensor.nordpool
 
   #Get todays prices from nordpool hacs addon. Todays prices should always be available
   today_prices = state.getattr(nordpool_sensor).get("today")

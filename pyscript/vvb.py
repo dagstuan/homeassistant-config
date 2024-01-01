@@ -1,15 +1,16 @@
 from datetime import datetime, date, timedelta
 import math
+from pytz import timezone
 
 # Hours to not run VVB ever.
-hours_to_not_run = [21, 22, 23]
+hours_to_not_run = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 
 # How many consecutive hours to run when price is at it's lowest
 hours_to_run_at_bottom = 4
 
 # How many consecutive hours to run once a day otherwise. The
 # script will attempt to find the lowest price to run.
-hours_to_run_otherwise = 2
+hours_to_run_otherwise = 0
 
 # If the average price of the other cheapest hours found are
 # higher than this threshold. Skip the other hours.
@@ -51,7 +52,8 @@ def get_cheapest_hours_for_consecutive_hour_group(hour_price_dict, size):
   sum_hours_dict = {sum([hour_price_dict[hour] for hour in combination]): combination for combination in combinations}
 
   if (size > 1):
-    hours_to_compare = math.floor(size / 2)
+    # Compare the first 75% of the time
+    hours_to_compare = math.floor(size * 0.8)
 
     # If the amount of hours to find is more than one, make sure we
     # find the hours where the start-hours are cheaper, since the
@@ -114,10 +116,10 @@ def remove_cheapest_hours_with_cooldown_from_hour_price_dict(hour_price_dict, ch
 
   return hour_price_dict
 
-def calc_hours_to_run_vacation_mode(day, full_hour_price_dict):
+def calc_hours_to_run_vacation_mode(date, full_hour_price_dict):
   log.info("Vacation mode enabled. Calculating 5 lowest consecutive hours if the day is even")
 
-  if (day % 2 != 0):
+  if (date.day % 2 != 0):
     log.info("Odd day, not running since vacation mode is enabled")
     return []
 
@@ -127,14 +129,14 @@ def calc_hours_to_run_vacation_mode(day, full_hour_price_dict):
 
   return cheapest_hours
 
-def calc_hours_to_run(day, vacation_mode_enabled,
+def calc_hours_to_run(date, vacation_mode_enabled,
   price_hour_array, hours_to_run_at_bottom,
   hours_to_run_otherwise, cooldown,
   hours_to_not_run, threshold_price_skip_other_hours):
   full_hour_price_dict = get_hour_price_dict(price_hour_array)
 
   if (vacation_mode_enabled):
-    return calc_hours_to_run_vacation_mode(day, full_hour_price_dict)
+    return calc_hours_to_run_vacation_mode(date, full_hour_price_dict)
 
   filtered_hour_price_dict = { hour: full_hour_price_dict[hour] for hour in full_hour_price_dict.keys() if not hour in hours_to_not_run }
 
@@ -144,21 +146,23 @@ def calc_hours_to_run(day, vacation_mode_enabled,
 
   hours_to_run = []
   hours_to_run.extend(cheapest_total_hours)
-  new_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(filtered_hour_price_dict, cheapest_total_hours, cooldown)
-  (price_other, cheapest_other_hours) = get_cheapest_hours(new_hour_price_dict, hours_to_run_otherwise)
 
-  average_price_other_hours = price_other / len(cheapest_other_hours)
+  if (hours_to_run_otherwise > 0):
+    new_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(filtered_hour_price_dict, cheapest_total_hours, cooldown)
+    (price_other, cheapest_other_hours) = get_cheapest_hours(new_hour_price_dict, hours_to_run_otherwise)
 
-  log.info(f"Found other hours {cheapest_other_hours} with average price {average_price_other_hours}")
+    average_price_other_hours = price_other / len(cheapest_other_hours)
 
-  if (average_price_other_hours <= threshold_price_skip_other_hours):
-    hours_to_run.extend(cheapest_other_hours)
-  else:
-    log.warning("Average price for other hours was above threshold. Only running the cheapest single hour ignoring hours to not run.")
+    log.info(f"Found other hours {cheapest_other_hours} with average price {average_price_other_hours}")
 
-    filtered_full_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(full_hour_price_dict, cheapest_total_hours, cooldown)
+    if (average_price_other_hours <= threshold_price_skip_other_hours):
+      hours_to_run.extend(cheapest_other_hours)
+    else:
+      log.warning("Average price for other hours was above threshold. Only running the cheapest single hour ignoring hours to not run.")
 
-    hours_to_run.append(min(filtered_full_hour_price_dict, key=filtered_full_hour_price_dict.get))
+      filtered_full_hour_price_dict = remove_cheapest_hours_with_cooldown_from_hour_price_dict(full_hour_price_dict, cheapest_total_hours, cooldown)
+
+      hours_to_run.append(min(filtered_full_hour_price_dict, key=filtered_full_hour_price_dict.get))
 
   hours_to_run.sort()
 
@@ -171,16 +175,15 @@ def try_parse_datetime(date_string):
     return None
 
 @service
-@time_trigger("cron(*/45 * * * *)")
+@time_trigger("startup", "cron(1 * * * *)", "cron(16 * * * *)", "cron(31 * * * *)", "cron(46 * * * *)")
 def vvb():
   log.info("Running VVB script.")
 
   now = datetime.now()
-  current_day = now.day
-  tomorrow_day = (date.today() + timedelta(days=1)).day
+  tomorrow = date.today() + timedelta(days=1)
   current_hour = now.hour
 
-  nordpool_sensor = sensor.nordpool_kwh_trheim_nok_3_10_025
+  nordpool_sensor = sensor.nordpool
 
   vacation_mode_enabled = input_boolean.vacation_mode == "on"
 
@@ -190,12 +193,12 @@ def vvb():
   # Check if we are within 24 hours of the vacation mode being switched off
   # Return to normal operations if that is the case.
   vacation_mode_auto_off = try_parse_datetime(input_datetime.vacation_mode_auto_off)
-  if (vacation_mode_auto_off - now < timedelta(days=1)):
+  if (vacation_mode_auto_off > now and vacation_mode_auto_off - now < timedelta(days=1)):
     log.info("Vacation mode auto off in less than a day. Running VVB normally.")
     vacation_mode_enabled = False
 
   hours_on_today = calc_hours_to_run(
-    current_day,
+    now,
     vacation_mode_enabled,
     today_prices,
     hours_to_run_at_bottom,
@@ -207,9 +210,10 @@ def vvb():
   #Try to fetch tomorrows prices. This might fail before 14:00
   tomorrow_prices = state.getattr(nordpool_sensor).get("tomorrow")
   #If prices for tomorrow is available
+  hours_on_tomorrow = []
   if tomorrow_prices is not None and len(tomorrow_prices) > 0 and tomorrow_prices[0] is not None:
       hours_on_tomorrow = calc_hours_to_run(
-        tomorrow_day,
+        tomorrow,
         vacation_mode_enabled,
         tomorrow_prices,
         hours_to_run_at_bottom,
@@ -217,9 +221,20 @@ def vvb():
         cooldown_before_and_after_running,
         hours_to_not_run,
         threshold_price_skip_other_hours)
-  else:
-    hours_on_tomorrow = []
+
+  tzinfo = timezone("Europe/Oslo")
+  hours_on_today_datetime = [datetime.combine(now, datetime.min.time(), tzinfo=tzinfo) + timedelta(hours=hour) for hour in hours_on_today]
+  hours_on_tomorrow_datetime = [datetime.combine(tomorrow, datetime.min.time(), tzinfo=tzinfo) + timedelta(hours=hour) for hour in hours_on_tomorrow] if hours_on_tomorrow else []
 
   should_be_on_now = current_hour in hours_on_today
 
-  state.set("sensor.varmtvannsbereder_on", should_be_on_now, new_attributes ={"today_on": hours_on_today, "tomorrow_on": hours_on_tomorrow, "hours_to_not_run": hours_to_not_run})
+  state.set(
+    "sensor.varmtvannsbereder_on",
+    should_be_on_now,
+    new_attributes ={
+      "today_on": hours_on_today,
+      "tomorrow_on": hours_on_tomorrow,
+      "hours_on_datetime": hours_on_today_datetime + hours_on_tomorrow_datetime,
+      "hours_to_not_run": hours_to_not_run
+    }
+  )
