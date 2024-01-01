@@ -654,26 +654,24 @@
       entity_id: input_select.soverom_temperature_mode
       state: comfort
     then:
-    - service: script.1661806381402
+    - service: tts.google_translate_say
       continue_on_error: true
       data:
-        tts_entity: media_player.soverom
-        message: Greit, jeg skrur ned temperaturen.
+        entity_id: media_player.soverom
         language: 'no'
-        volume_level: 0.3
+        message: Buuu! jeg skrur ned temperaturen.
     - service: input_select.select_option
       data:
         option: sleep
       target:
         entity_id: input_select.soverom_temperature_mode
     else:
-    - service: script.1661806381402
+    - service: tts.google_translate_say
       continue_on_error: true
       data:
-        tts_entity: media_player.soverom
-        message: Greit, jeg skrur opp temperaturen.
+        entity_id: media_player.soverom
         language: 'no'
-        volume_level: 0.3
+        message: Superfett! jeg skrur opp temperaturen.
     - service: input_select.select_option
       data:
         option: comfort
