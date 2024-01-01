@@ -341,45 +341,48 @@
     data: {}
     target:
       entity_id: media_player.stua
-  - if:
+  - alias: If vacation mode is off
+    if:
     - condition: state
-      entity_id: input_boolean.alarm_triggered_today
-      state: 'on'
-    - condition: time
-      weekday:
-      - mon
-      - tue
-      - wed
-      - thu
-      - fri
-      before: '15:00:00'
-      after: 00:00:00
-    - condition: state
-      entity_id: automation.vacation_mode
+      entity_id: input_boolean.vacation_mode
       state: 'off'
     then:
-    - service: input_select.select_option
-      data:
-        option: sleep
-      target:
-        entity_id: input_select.stua_temperature_mode
-    - service: input_select.select_option
-      data:
-        option: sleep
-      target:
-        entity_id: input_select.kontor_temperature_mode
-    else:
-    - service: input_select.select_option
-      data:
-        option: away
-      target:
-        entity_id: input_select.stua_temperature_mode
-    - service: input_select.select_option
-      data:
-        option: away
-      target:
-        entity_id: input_select.kontor_temperature_mode
-    alias: Lower home temperature if not after midnight and vacation mode is not on.
+    - if:
+      - condition: state
+        entity_id: input_boolean.alarm_triggered_today
+        state: 'on'
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+        before: '15:00:00'
+        after: 00:00:00
+      then:
+      - service: input_select.select_option
+        data:
+          option: sleep
+        target:
+          entity_id: input_select.stua_temperature_mode
+      - service: input_select.select_option
+        data:
+          option: sleep
+        target:
+          entity_id: input_select.kontor_temperature_mode
+      else:
+      - service: input_select.select_option
+        data:
+          option: away
+        target:
+          entity_id: input_select.stua_temperature_mode
+      - service: input_select.select_option
+        data:
+          option: away
+        target:
+          entity_id: input_select.kontor_temperature_mode
+      alias: Lower home temperature if not after midnight.
   - if:
     - condition: or
       conditions:
