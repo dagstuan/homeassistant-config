@@ -176,30 +176,32 @@ sensor:
     precision: 3
     price_type: kWh
     currency: NOK
-    additional_costs: '{% set s = {
-  "kapasitet_2_5_maaned_kost": 147,
-  "energiselskap_maaned_kost": 0,
-  "energiledd_dag_vinter_inkl_avg": 0.3020,
-  "energiledd_dag_sommer_inkl_avg": 0.3855,
-  "energiledd_natt_vinter_inkl_avg": 0.2145,
-  "energiledd_natt_sommer_inkl_avg": 0.2980,
-  "mva": 0.25,
-  "spotpris": 0
-}
-%}
-{% if now().month >= 4 %}
-    {% if now().hour >= 6 and now().hour < 23 %}
-        {{(((s.kapasitet_2_5_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+(s.energiledd_dag_sommer_inkl_avg*(1+s.mva))+s.spotpris|float}}
-    {% else %}
-        {{(((s.kapasitet_2_5_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+(s.energiledd_natt_sommer_inkl_avg*(1+s.mva))+s.spotpris|float}}
-    {% endif %}
-{% else %}
-    {% if now().hour >= 6 and now().hour < 23 %}
-        {{(((s.kapasitet_2_5_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+(s.energiledd_dag_vinter_inkl_avg*(1+s.mva))+s.spotpris|float}}
-    {% else %}
-        {{(((s.kapasitet_2_5_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+(s.energiledd_natt_vinter_inkl_avg*(1+s.mva))+s.spotpris|float}}
-    {% endif %}
-{% endif %}'
+    additional_costs: >-
+      {%  set price_with_stromstotte = max(current_price - 0.9125, 0) %}
+      {%  set s = {
+          "kapasitetsledd_maaned_kost": 225,
+          "energiselskap_maaned_kost": 0,
+          "energiledd_vinter_dag_inkl_avg_og_mva": 0.3989,
+          "energiledd_vinter_natt_inkl_avg_og_mva": 0.2651,
+          "energiledd_summer_dag_inkl_avg_og_mva": 0.4855,
+          "energiledd_summer_natt_inkl_avg_og_mva": 0.3518,
+          "stromstotte": price_with_stromstotte * 0.9
+        }
+      %}
+      {% set now = now() %}
+      {% if now.month >= 1 and now.month <= 3 %}
+        {% if now.hour >= 6 and now.hour <= 22 %}
+            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_vinter_dag_inkl_avg_og_mva-s.stromstotte|float}}
+        {% else %}
+            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_vinter_natt_inkl_avg_og_mva-s.stromstotte|float}}
+        {% endif %}
+      {% else %}
+        {% if now.hour >= 6 and now.hour <= 22 %}
+            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_summer_dag_inkl_avg_og_mva-s.stromstotte|float}}
+        {% else %}
+            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_summer_natt_inkl_avg_og_mva-s.stromstotte|float}}
+        {% endif %}
+      {% endif %}
 
   - platform: integration
     source: sensor.han_sensor_power
