@@ -72,7 +72,7 @@
     for:
       hours: 0
       minutes: 0
-      seconds: 15
+      seconds: 7
   condition:
   - condition: state
     entity_id: input_boolean.lights_dimmed_by_movie_mode
