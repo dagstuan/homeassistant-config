@@ -141,19 +141,10 @@
               target:
                 entity_id: media_player.soverom
               data:
-                media_content_id: FV:2/8
+                media_content_id: FV:2/21
                 media_content_type: favorite_item_id
               metadata:
                 title: NRK P3
-                thumbnail: http://cdn-profiles.tunein.com/s26044/images/logoq.png?t=154963
-                media_class: genre
-                children_media_class:
-                navigateIds:
-                - {}
-                - media_content_type: favorites
-                  media_content_id: ''
-                - media_content_type: favorites_folder
-                  media_content_id: object.item.audioItem.audioBroadcast
             - delay:
                 hours: 0
                 minutes: 0
@@ -165,20 +156,23 @@
       minutes: 0
       seconds: 30
       milliseconds: 0
-  - service: script.1661806381402
+  - service: tts.google_translate_say
     continue_on_error: true
     data:
-      tts_entity: media_player.soverom
-      message: '{% set forecast = state_attr(''weather.home'', ''forecast'')[0] %}
-        God morgen! I dag blir det {% if forecast.condition == "cloudy"  %} skyet
-        {% elif forecast.condition == "partlycloudy" %} delvis skyet {% elif forecast.condition
-        == "clearsky" %} skyfritt {% elif forecast.condition == "rain" %} regn {%
-        elif forecast.condition == "sunny" %} sol {% elif forecast.condition == "rainy"
-        %} regn {% elif forecast.condition == "snowy" %}  snø {% else %} {{ forecast.condition
-        }} {% endif %} med temperaturer mellom  {{ forecast.templow }} og {{ forecast.temperature
-        }} grader. Ha en fin dag!'
+      entity_id: media_player.soverom
       language: 'no'
-    enabled: true
+      message: '{%- macro render_condition(cond) -%}{%- if cond == "cloudy" -%}skyet{%-
+        elif cond == "partlycloudy" -%}delvis skyet{%- elif cond == "clearsky" -%}skyfritt{%-
+        elif cond == "rain" or cond == "rainy" -%}regn{%- elif cond == "sunny" -%}sol{%-
+        elif cond == "clear-night" -%}klar natt{%- elif cond == "snowy" -%}snø{%-
+        elif cond == "snowy-rainy" -%}snø og regn{%- else -%}{{ cond }}{%- endif -%}{%-
+        endmacro -%}{%- set current_condition = states(''weather.home'') -%}{%- set
+        temperature = state_attr(''weather.home'', ''temperature'') -%}{%- set forecast
+        = state_attr(''weather.home'', ''forecast'')[0] -%} God morgen! Nå er det
+        {{ render_condition(current_condition) }} og {{ temperature }} grader ute.
+        I dag blir det {{ render_condition(forecast.condition) }} med temperaturer
+        mellom {{ forecast.templow }} og {{ forecast.temperature }} grader. Ha en
+        fin dag!'
   - delay:
       hours: 0
       minutes: 9
