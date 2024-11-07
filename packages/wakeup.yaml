@@ -1,0 +1,24 @@
+wakeup:
+  input_boolean:
+    wakeup_enabled:
+      name: Wakeup enabled
+    wakeup_enabled_monday:
+      name: Wakeup enabled Monday
+    wakeup_enabled_tuesday:
+      name: Wakeup enabled Tuesday
+    wakeup_enabled_wednesday:
+      name: Wakeup enabled Wednesday
+    wakeup_enabled_thursday:
+      name: Wakeup enabled Thursday
+    wakeup_enabled_friday:
+      name: Wakeup enabled Friday
+    wakeup_enabled_saturday:
+      name: Wakeup enabled Saturday
+    wakeup_enabled_sunday:
+      name: Wakeup enabled Sunday
+
+  input_datetime:
+    wakeup_time:
+      name: Wakeup time
+      has_date: false
+      has_time: true

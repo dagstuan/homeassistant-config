@@ -42,13 +42,13 @@ ev:
           precision: 2
     - platform: filter
       entity_id: sensor.non_ev_current_power
-      name: Non EV power moving avg 30m
-      unique_id: non_ev_power_moving_avg_30m
+      name: Non EV power moving avg 20m
+      unique_id: non_ev_power_moving_avg_20m
       filters:
         - filter: lowpass
           time_constant: 10
         - filter: time_simple_moving_average
-          window_size: "00:30"
+          window_size: "00:20"
           precision: 2
   utility_meter:
     ev_charger_consumption:

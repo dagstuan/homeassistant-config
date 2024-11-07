@@ -45,6 +45,15 @@ sidebar_menu:
       require_admin: true
       config:
         ingress: core_configurator
+    - name: ha_services
+      sidebar_title: Services
+      sidebar_icon: mdi:wrench
+      js_url: /api/hassio/app/entrypoint.js
+      url_path: 'developer-tools/service'
+      embed_iframe: true
+      require_admin: true
+      config:
+        ingress: core_configurator
     - name: ha_restart
       sidebar_title: Restart
       sidebar_icon: mdi:restart

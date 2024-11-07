@@ -20,11 +20,10 @@ api:
 nordpool:
 
 recorder:
-  purge_keep_days: 40
+  purge_keep_days: 20
   commit_interval: 5
   include:
     domains:
-      - automation
       - light
       - switch
       - media_player
@@ -69,6 +68,8 @@ recorder:
       - sensor.ev_charger_consumption*
       - number.ev_charger_installation_available_current
       - sensor.non_ev*
+      - sensor.kaffetrakter*
+      - sensor.vaskemaskin*
   db_url: !secret mariadb_url
 
 http:
@@ -112,6 +113,12 @@ google_assistant:
     - light
     - climate
   entity_config:
+    switch.kaffetrakter:
+      name: "Kaffetrakter"
+      expose: true
+      aliases:
+        - Kaffetrakteren
+        - Kaffen
     light.spotter:
       name: "Spotter"
       expose: true
@@ -140,6 +147,8 @@ input_boolean:
     name: Lights were dimmed by movie mode
   alarm_triggered_today:
     name: Alarm triggered today
+  vaskemaskin_running:
+    name: Vaskemaskin running
 
 input_text:
   stue_bryter_helper_last_controller_event:
@@ -165,6 +174,7 @@ input_number:
 template:
   - sensor:
     - name: Outdoor temperature
+      unique_id: outdoor_temperature
       state: "{{ state_attr('weather.home', 'temperature') }}"
       unit_of_measurement: "°C"
       state_class: measurement
@@ -202,13 +212,6 @@ template:
       state: "{{ states('sensor.varmtvannsbereder_power') | float(0) > 1 }}"
 
 sensor:
-  - platform: systemmonitor
-    resources:
-      - type: disk_use_percent
-      - type: memory_free
-      - type: disk_free
-      - type: processor_use
-
   - platform: time_date
     display_options:
       - 'time'
@@ -218,7 +221,6 @@ sensor:
       - 'date_time_iso'
       - 'time_date'
       - 'time_utc'
-      - 'beat'
 
   - platform: history_stats
     name: Varmtvannsbereder on today
@@ -229,19 +231,19 @@ sensor:
     end: '{{ now() }}'
 
   - platform: nordpool
-    region: "Tr.heim"
+    region: NO3
     precision: 3
     price_type: kWh
     currency: NOK
     additional_costs: >-
       {%  set price_with_stromstotte = max(current_price - 0.9125, 0) %}
       {%  set s = {
-          "kapasitetsledd_maaned_kost": 225,
+          "kapasitetsledd_maaned_kost": 239,
           "energiselskap_maaned_kost": 0,
           "energiledd_vinter_dag_inkl_avg_og_mva": 0.3989,
           "energiledd_vinter_natt_inkl_avg_og_mva": 0.2651,
-          "energiledd_summer_dag_inkl_avg_og_mva": 0.4855,
-          "energiledd_summer_natt_inkl_avg_og_mva": 0.3518,
+          "energiledd_sommer_dag_inkl_avg_og_mva": 0.5018,
+          "energiledd_sommer_natt_inkl_avg_og_mva": 0.3593,
           "stromstotte": price_with_stromstotte * 0.9
         }
       %}
@@ -254,9 +256,9 @@ sensor:
         {% endif %}
       {% else %}
         {% if now.hour >= 6 and now.hour <= 22 %}
-            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_summer_dag_inkl_avg_og_mva-s.stromstotte|float}}
+            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_sommer_dag_inkl_avg_og_mva-s.stromstotte|float}}
         {% else %}
-            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_summer_natt_inkl_avg_og_mva-s.stromstotte|float}}
+            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_sommer_natt_inkl_avg_og_mva-s.stromstotte|float}}
         {% endif %}
       {% endif %}
 
@@ -281,13 +283,13 @@ sensor:
 
   - platform: filter
     entity_id: sensor.han_sensor_power
-    name: Han sensor power moving avg 30m
-    unique_id: han_sensor_power_moving_avg_30m
+    name: Han sensor power moving avg 20m
+    unique_id: han_sensor_power_moving_avg_20m
     filters:
       - filter: lowpass
         time_constant: 10
       - filter: time_simple_moving_average
-        window_size: "00:30"
+        window_size: "00:20"
         precision: 2
 
 utility_meter:

@@ -4,18 +4,18 @@
     light.oy:
       supported_color_modes:
       - brightness
-      friendly_name: Øy
-      supported_features: 0
       color_mode: brightness
       brightness: 255
+      friendly_name: Øy
+      supported_features: 0
       state: 'on'
     light.spotter:
       supported_color_modes:
       - brightness
+      color_mode: brightness
+      brightness: 217
       friendly_name: Spotter
       supported_features: 0
-      color_mode: brightness
-      brightness: 255
       state: 'on'
     light.ikea_lampe:
       min_color_temp_kelvin: 2000
@@ -27,13 +27,16 @@
       - breathe
       - okay
       - channel_change
+      - candle
+      - fireplace
+      - colorloop
       - finish_effect
       - stop_effect
+      - stop_hue_effect
       supported_color_modes:
       - color_temp
       - xy
-      friendly_name: IKEA-Lampe
-      supported_features: 44
+      effect:
       color_mode: color_temp
       brightness: 255
       color_temp_kelvin: 2732
@@ -48,12 +51,10 @@
       xy_color:
       - 0.524
       - 0.387
+      friendly_name: IKEA-Lampe
+      supported_features: 44
       state: 'on'
     light.spisebord:
-      min_color_temp_kelvin: 2000
-      max_color_temp_kelvin: 6535
-      min_mireds: 153
-      max_mireds: 500
       effect_list:
       - blink
       - breathe
@@ -62,24 +63,12 @@
       - finish_effect
       - stop_effect
       supported_color_modes:
-      - color_temp
-      - xy
+      - brightness
+      effect:
+      color_mode: brightness
+      brightness: 219
       friendly_name: Spisebord
       supported_features: 44
-      color_mode: color_temp
-      brightness: 255
-      color_temp_kelvin: 2732
-      color_temp: 366
-      hs_color:
-      - 28.327
-      - 64.71
-      rgb_color:
-      - 255
-      - 167
-      - 89
-      xy_color:
-      - 0.524
-      - 0.387
       state: 'on'
     light.hjorne:
       effect_list:
@@ -87,22 +76,33 @@
       - breathe
       - okay
       - channel_change
+      - candle
+      - finish_effect
+      - stop_effect
+      - stop_hue_effect
+      supported_color_modes:
+      - brightness
+      effect:
+      color_mode: brightness
+      brightness: 58
+      friendly_name: Hjørne
+      supported_features: 44
+      state: 'on'
+    light.gang:
+      effect_list:
+      - blink
+      - breathe
+      - okay
+      - channel_change
       - finish_effect
       - stop_effect
       supported_color_modes:
       - brightness
-      friendly_name: Hjørne
-      supported_features: 44
+      effect:
       color_mode: brightness
       brightness: 255
-      state: 'on'
-    light.gang:
-      supported_color_modes:
-      - brightness
       friendly_name: Gang
-      supported_features: 40
-      color_mode: brightness
-      brightness: 255
+      supported_features: 44
       state: 'on'
   icon: mdi:lightbulb
   metadata: {}

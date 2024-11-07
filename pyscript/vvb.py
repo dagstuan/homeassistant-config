@@ -3,7 +3,7 @@ import math
 from pytz import timezone
 
 # Hours to not run VVB ever.
-hours_to_not_run = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+hours_to_not_run = [6, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 
 # How many consecutive hours to run when price is at it's lowest
 hours_to_run_at_bottom = 4

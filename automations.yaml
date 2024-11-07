@@ -95,35 +95,52 @@
 - id: '1634676373160'
   alias: Wakeup Soverom
   description: ''
-  trigger:
-  - platform: event
-    event_type: WAKEUP_SOVEROM
-  action:
-  - service: input_boolean.turn_on
-    data: {}
+  triggers:
+  - event_type: WAKEUP_SOVEROM
+    trigger: event
+    enabled: false
+  - trigger: time
+    at: input_datetime.wakeup_time
+    enabled: true
+  conditions:
+  - condition: template
+    value_template: "{% set today = now().weekday() %} {% set weekdays = {\n    0:
+      states('input_boolean.wakeup_enabled_monday'),\n    1: states('input_boolean.wakeup_enabled_tuesday'),\n
+      \   2: states('input_boolean.wakeup_enabled_wednesday'),\n    3: states('input_boolean.wakeup_enabled_thursday'),\n
+      \   4: states('input_boolean.wakeup_enabled_friday'),\n    5: states('input_boolean.wakeup_enabled_saturday'),\n
+      \   6: states('input_boolean.wakeup_enabled_sunday')\n} %} {{ weekdays[today]
+      == 'on' }}\n"
+    enabled: true
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
+    enabled: true
+  actions:
+  - data: {}
     target:
       entity_id: input_boolean.alarm_triggered_today
+    action: input_boolean.turn_on
   - parallel:
     - sequence:
-      - service: light.turn_on
-        target:
+      - target:
           entity_id: light.soveromslampe
         data:
           brightness: 0
-      - service: light.turn_on
-        target:
+        action: light.turn_on
+      - target:
           entity_id: light.soveromslampe
         data:
           brightness: 255
           transition: 1200
+        action: light.turn_on
       alias: Fade inn lys på soverom
     - sequence:
-      - service: media_player.volume_set
-        continue_on_error: true
+      - continue_on_error: true
         target:
           entity_id: media_player.soverom
         data:
           volume_level: 0.07
+        action: media_player.volume_set
       - repeat:
           count: '5'
           sequence:
@@ -136,8 +153,7 @@
                 entity_id: media_player.soverom
                 type: is_playing
             then:
-            - service: media_player.play_media
-              continue_on_error: true
+            - continue_on_error: true
               target:
                 entity_id: media_player.soverom
               data:
@@ -145,6 +161,7 @@
                 media_content_type: favorite_item_id
               metadata:
                 title: NRK P3
+              action: media_player.play_media
             - delay:
                 hours: 0
                 minutes: 0
@@ -156,42 +173,33 @@
       minutes: 0
       seconds: 30
       milliseconds: 0
-  - service: tts.google_translate_say
-    continue_on_error: true
-    data:
-      entity_id: media_player.soverom
-      language: 'no'
-      message: '{%- macro render_condition(cond) -%}{%- if cond == "cloudy" -%}skyet{%-
-        elif cond == "partlycloudy" -%}delvis skyet{%- elif cond == "clearsky" -%}skyfritt{%-
-        elif cond == "rain" or cond == "rainy" -%}regn{%- elif cond == "sunny" -%}sol{%-
-        elif cond == "clear-night" -%}klar natt{%- elif cond == "snowy" -%}snø{%-
-        elif cond == "snowy-rainy" -%}snø og regn{%- else -%}{{ cond }}{%- endif -%}{%-
-        endmacro -%}{%- set current_condition = states(''weather.home'') -%}{%- set
-        temperature = state_attr(''weather.home'', ''temperature'') -%}{%- set forecast
-        = state_attr(''weather.home'', ''forecast'')[0] -%} God morgen! Nå er det
-        {{ render_condition(current_condition) }} og {{ temperature }} grader ute.
-        I dag blir det {{ render_condition(forecast.condition) }} med temperaturer
-        mellom {{ forecast.templow }} og {{ forecast.temperature }} grader. Ha en
-        fin dag!'
+  - continue_on_error: true
+    metadata: {}
+    data: {}
+    action: script.tts_morning_soverom
   - delay:
       hours: 0
-      minutes: 9
-      seconds: 30
+      minutes: 10
+      seconds: 0
       milliseconds: 0
-  - service: scene.turn_on
-    target:
-      entity_id: scene.stue_og_kjokken_pa
-    metadata: {}
-    enabled: true
+  - alias: Turn on lights and start kaffetrakter
+    parallel:
+    - action: script.kaffetrakter_morning
+      data: {}
+    - target:
+        entity_id: scene.stue_og_kjokken_pa
+      metadata: {}
+      enabled: true
+      action: scene.turn_on
   - delay:
       hours: 1
       minutes: 50
       seconds: 0
       milliseconds: 0
-  - service: media_player.media_stop
-    data: {}
+  - data: {}
     target:
       entity_id: media_player.soverom
+    action: media_player.media_stop
   mode: restart
 - id: '1662475420588'
   alias: Plex remote started playing notification
@@ -239,9 +247,8 @@
 - id: '1663777219467'
   alias: Notify unavailable entities
   description: ''
-  trigger:
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - media_player.soverom
     - media_player.sonos_stue
     - media_player.kjokken
@@ -250,23 +257,29 @@
     - light.ikea_lampe
     - light.spisebord
     - sensor.plex_nas
+    - climate.kontor
+    - climate.soverom
+    - climate.stua
+    - switch.vaskemaskin
+    - switch.kaffetrakter
     to: unavailable
     for:
       hours: 0
-      minutes: 5
+      minutes: 10
       seconds: 0
-  condition: []
-  action:
-  - service: notify.mobile_app_dagphone
-    data:
+    trigger: state
+  conditions: []
+  actions:
+  - data:
       title: Device offline!
       message: "\U0001F4F5 {{ state_attr(trigger.to_state.entity_id, 'friendly_name')
-        }} is offline more than 5 minutes!\n"
+        }} is offline more than 10 minutes!\n"
       data:
         channel: Notfall
         priority: high
         ttl: 0
         color: red
+    action: notify.mobile_app_dagphone
   mode: single
 - id: '1664382480728'
   alias: Plex remote idle
@@ -320,21 +333,26 @@
     below: 1
   condition: []
   action:
-  - service: scene.turn_on
-    target:
+  - target:
       entity_id: scene.alle_lys_av
     metadata: {}
-  - service: media_player.media_stop
+    action: scene.turn_on
+  - action: switch.turn_off
+    metadata: {}
     data: {}
+    target:
+      entity_id: switch.kaffetrakter
+  - data: {}
     target:
       entity_id:
       - media_player.kjokken
       - media_player.sonos_stue
       - media_player.soverom
-  - service: media_player.turn_off
-    data: {}
+    action: media_player.media_stop
+  - data: {}
     target:
       entity_id: media_player.stua
+    action: media_player.turn_off
   - alias: If vacation mode is off
     if:
     - condition: state
@@ -355,49 +373,58 @@
         before: '15:00:00'
         after: 00:00:00
       then:
-      - service: input_select.select_option
-        data:
+      - data:
           option: sleep
         target:
           entity_id: input_select.stua_temperature_mode
-      - service: input_select.select_option
-        data:
+        action: input_select.select_option
+      - data:
           option: sleep
         target:
           entity_id: input_select.kontor_temperature_mode
+        action: input_select.select_option
       else:
-      - service: input_select.select_option
-        data:
+      - data:
           option: away
         target:
           entity_id: input_select.stua_temperature_mode
-      - service: input_select.select_option
-        data:
+        action: input_select.select_option
+      - data:
           option: away
         target:
           entity_id: input_select.kontor_temperature_mode
+        action: input_select.select_option
       alias: Lower home temperature if not after midnight.
   - if:
-    - condition: or
+    - alias: Temperature is below 10 and window is open
+      condition: and
       conditions:
-      - condition: state
-        entity_id: binary_sensor.kontorvindu_contact
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.verandador_contact
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.soveromsvindu_contact
-        state: 'on'
+      - condition: numeric_state
+        entity_id: weather.home
+        attribute: temperature
+        below: 10
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.kontorvindu_contact
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.verandador_contact
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.soveromsvindu_contact
+          state: 'on'
+        alias: Window is open
     then:
-    - service: notify.mobile_app_dagphone
-      data:
+    - data:
         message: Et vindu er fortsatt åpent, men ingen er hjemme!
         title: Vindu åpent
-    - service: notify.mobile_app_iphone_ingvild
-      data:
+      action: notify.mobile_app_dagphone
+    - data:
         message: Et vindu er fortsatt åpent, men ingen er hjemme!
         title: Vindu åpent
+      action: notify.mobile_app_iphone_ingvild
+    alias: Notify window left open
   mode: single
 - id: '1664910808088'
   alias: Someone arrives home
@@ -411,41 +438,41 @@
     after: 06:00:00
     before: 01:00:00
   action:
-  - service: scene.turn_on
-    target:
+  - target:
       entity_id: scene.lyst
     metadata: {}
     enabled: false
-  - service: light.turn_on
-    data: {}
+    action: scene.turn_on
+  - data: {}
     target:
       entity_id:
       - light.kjokken_og_stuelys
-  - service: light.turn_on
-    data:
+    action: light.turn_on
+  - data:
       brightness: 255
     target:
       entity_id: light.gang
-  - service: notify.mobile_app_dagphone
-    data:
+    action: light.turn_on
+  - data:
       message: Someone arrived home
     enabled: false
-  - if:
+    action: notify.mobile_app_dagphone
+  - alias: If time less than 23
+    if:
     - condition: time
       before: '23:00:00'
       after: 06:00:00
     then:
-    - service: input_select.select_option
-      data:
+    - data:
         option: comfort
       target:
         entity_id: input_select.kontor_temperature_mode
-    - service: input_select.select_option
-      data:
+      action: input_select.select_option
+    - data:
         option: comfort
       target:
         entity_id: input_select.stua_temperature_mode
-    alias: Enable heating if time less than 23
+      action: input_select.select_option
   mode: single
 - id: '1665747004941'
   alias: Stue bryter Controller
@@ -1127,15 +1154,15 @@
     entity_id: device_tracker.pingu_location_tracker
     state: home
   action:
-  - wait_template: '{{ state_attr(''sensor.ev_smart_charging_charging'', ''Charging
-      start time'') != None }}'
+  - wait_template: '{{ state_attr(''sensor.ev_smart_charging_charging'', ''charging_start_time'')
+      != None }}'
     continue_on_timeout: true
     timeout: '10'
-  - service: notify.mobile_app_dagphone
-    data:
+  - data:
       title: EV Connected
-      message: Charging will start at {{ as_timestamp(states.sensor.ev_smart_charging_charging.attributes["Charging
-        start time"]) | timestamp_custom('%H:%M') }}
+      message: Charging will start at {{ as_timestamp(states.sensor.ev_smart_charging_charging.attributes["charging_start_time"])
+        | timestamp_custom('%H:%M') }}
+    action: notify.mobile_app_dagphone
   mode: single
 - id: '1699425309703'
   alias: EV precondition on battery if electricity price is high and normal SOC
@@ -1225,149 +1252,176 @@
 
               '
   mode: single
-- id: '1700322556805'
-  alias: EV smart charging - stop Zaptec
-  description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - sensor.ev_smart_charging_charging
-    from:
-    to:
-  - platform: state
-    entity_id:
-    - switch.ev_smart_charging_smart_charging_activated
-    from:
-    to: 'on'
-  - platform: homeassistant
-    event: start
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: sensor.ev_smart_charging_charging
-          state: 'on'
-      sequence:
-      - service: number.set_value
-        data:
-          value: '0'
-        target:
-          entity_id: number.ev_charger_installation_available_current
-  mode: restart
 - id: '1701203531307'
   alias: EV smart charging power adjust Zaptec
   description: ''
-  trigger:
-  - platform: time_pattern
-    seconds: '59'
-    minutes: /2
+  triggers:
+  - seconds: /30
+    minutes: '*'
     hours: '*'
     enabled: true
-  - platform: state
-    entity_id:
+    trigger: time_pattern
+  - entity_id:
     - sensor.ev_smart_charging_charging
     from:
-    to: 'on'
-  - platform: state
-    entity_id:
+    to:
+    enabled: true
+    id: charging_turned_on
+    trigger: state
+  - entity_id:
     - input_number.kwh_limit
     from:
     to:
-  - platform: homeassistant
-    event: start
-  - platform: numeric_state
-    entity_id:
+    enabled: true
+    trigger: state
+  - entity_id:
     - sensor.han_sensor_power
     above: input_number.power_limit
-  - platform: state
-    entity_id:
+    enabled: true
+    id: power_above_power_limit
+    trigger: numeric_state
+  - entity_id:
     - input_number.power_limit
-  - platform: numeric_state
-    entity_id:
+    enabled: true
+    from:
+    to:
+    trigger: state
+  - entity_id:
     - sensor.home_consumption_hourly
     above: input_number.kwh_limit
     for:
       hours: 0
-      minutes: 1
-      seconds: 0
-  condition:
-  - condition: state
-    entity_id: sensor.ev_smart_charging_charging
-    state: 'on'
-  action:
-  - variables:
-      volts: 230
-      is_same_hour_as_HA_start_hour: '{{ as_datetime(states(''sensor.uptime'')).strftime(''%Y-%m-%d
-        %H:00:00'') == utcnow().strftime(''%Y-%m-%d %H:00:00'') }}'
-      current_charge_limit_amps: '{{ states(''number.ev_charger_installation_available_current'')
-        | int(0) }}'
-      power_used_total: '{{ states(''sensor.han_sensor_power'') | int }}'
-      non_ev_power_now: '{{ states(''sensor.non_ev_current_power'') | int }}'
-      kWh_limit_entity: '{{ states(''input_number.kwh_limit'') | float(0) }}'
-      power_limit_entity: '{{ states(''input_number.power_limit'') | float(9000) }}'
-      kWh_consumption_current_hour: '{{ states(''sensor.home_consumption_hourly'')
-        | float(0) }}'
-      min_amp_limit: '{{ state_attr(''number.ev_charger_installation_available_current'',
-        ''min'') | int(0) }}'
-      max_amp_limit: '{{ state_attr(''number.ev_charger_installation_available_current'',
-        ''max'') | int(16) }}'
-      ev_charger_min_current: '{{ states(''number.ev_charger_charger_min_current'')
-        | float(0) }}'
-      non_ev_power_moving_avg_10m: '{{ states(''sensor.non_ev_power_moving_avg_10m'')
-        | float(0) }}'
-      kWh_limit: '{{ (kWh_limit_entity * 0.9) if is_same_hour_as_HA_start_hour else
-        kWh_limit_entity }}'
-      time_left_current_hour: '{{ 1 - now().minute / 60 - now().second / 3600 }}'
-      non_ev_kWh_consumption_rest_of_hour: '{{ ((non_ev_power_moving_avg_10m / 1000.0)
-        * time_left_current_hour) }}'
-      available_kWh_left_for_charging_current_hour: '{{ [0, kWh_limit - kWh_consumption_current_hour
-        - non_ev_kWh_consumption_rest_of_hour] | max }}'
-      power_charging_rest_of_hour: '{{ (available_kWh_left_for_charging_current_hour
-        / time_left_current_hour) * 1000.0 }}'
-      will_draw_more_power_than_power_limit: '{{ (power_charging_rest_of_hour + non_ev_power_now)
-        > power_limit_entity }}'
-      power_limit_charging: "{%- if will_draw_more_power_than_power_limit -%}\n  {{
-        power_limit_entity - non_ev_power_now }}\n{%- else -%}\n  {{ power_charging_rest_of_hour
-        }}\n{%- endif -%}"
-      new_charge_limit_amps: '{{ (power_limit_charging / volts) | round(0, ''floor'')}}'
-      new_charge_limit: "{%- if new_charge_limit_amps >= ev_charger_min_current -%}\n
-        \ {%- if current_charge_limit_amps == 0 and new_charge_limit_amps < (ev_charger_min_current
-        + 3) -%}\n    0.0\n  {%- else -%}\n    {{ [[new_charge_limit_amps, min_amp_limit]
-        | max, max_amp_limit] | min }}\n  {%- endif -%}\n{%- else -%}\n  0.0\n{%-
-        endif -%}"
-  - if:
-    - condition: template
-      value_template: '{{ states(''number.ev_charger_installation_available_current'')
-        | float(0) != new_charge_limit }}'
-      alias: Zaptec charging amps do not match new_charge_limit
-    then:
-    - service: number.set_value
-      data:
-        value: '{{ new_charge_limit }}'
-      target:
-        entity_id: number.ev_charger_installation_available_current
-      enabled: true
-    alias: Set Zaptec charging amps
-  - if:
-    - condition: state
-      entity_id: binary_sensor.pingu_charging
-      state: 'on'
-    - condition: template
-      value_template: '{{ states(''number.pingu_charging_amps'') | float(0) != new_charge_limit
-        }}'
-      alias: Pingu charging amps do not match new_charge_limit
-    then:
-    - service: number.set_value
-      data:
-        value: '{{ new_charge_limit }}'
-      target:
-        entity_id: number.pingu_charging_amps
-      enabled: true
-    alias: Set Pingu charging amps if Pingu is charging
-    enabled: false
+      minutes: 0
+      seconds: 30
+    enabled: true
+    id: consumption_above_limit
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: sensor.ev_smart_charging_charging
+        state: 'on'
+      - condition: or
+        conditions:
+        - alias: Last changed more than two minutes ago and minute is over 1 and below
+            59
+          condition: and
+          conditions:
+          - alias: Check that last changed is more than two minutes ago
+            condition: template
+            value_template: '{{ now() - states.number.ev_charger_installation_available_current.last_changed
+              > timedelta(minutes = 2) }}'
+          - alias: Check that minute is over 1 and below 59
+            condition: template
+            value_template: '{{ now().minute >= 1 and now().minute <= 59 }}'
+        - condition: trigger
+          id:
+          - power_above_power_limit
+          - charging_turned_on
+          - hass_started
+          - consumption_above_limit
+        enabled: true
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: sensor.ev_charger_charger_mode
+          state: Disconnected
+        alias: Test that EV Charger is not Disconnected
+      sequence:
+      - variables:
+          volts: 230
+          is_same_hour_as_HA_start_hour: '{{ as_datetime(states(''sensor.uptime'')).strftime(''%Y-%m-%d
+            %H:00:00'') == utcnow().strftime(''%Y-%m-%d %H:00:00'') }}'
+          current_charge_limit_amps: '{{ states(''number.ev_charger_installation_available_current'')
+            | int(0) }}'
+          power_used_total: '{{ states(''sensor.han_sensor_power'') | int }}'
+          non_ev_power_now: '{{ states(''sensor.non_ev_current_power'') | int }}'
+          kWh_limit_entity: '{{ states(''input_number.kwh_limit'') | float(0) }}'
+          power_limit_entity: '{{ states(''input_number.power_limit'') | float(9000)
+            }}'
+          kWh_consumption_current_hour: '{{ states(''sensor.home_consumption_hourly'')
+            | float(0) }}'
+          min_amp_limit: '{{ state_attr(''number.ev_charger_installation_available_current'',
+            ''min'') | int(0) }}'
+          max_amp_limit: '{{ state_attr(''number.ev_charger_installation_available_current'',
+            ''max'') | int(16) }}'
+          ev_charger_min_current: '{{ states(''number.ev_charger_charger_min_current'')
+            | float(0) }}'
+          non_ev_power_moving_avg: '{{ states(''sensor.non_ev_power_moving_avg_10m'')
+            | float(0) }}'
+          kWh_limit: '{{ (kWh_limit_entity * 0.85) if is_same_hour_as_HA_start_hour
+            else kWh_limit_entity }}'
+          time_left_current_hour: '{{ 1 - now().minute / 60 - now().second / 3600
+            }}'
+          non_ev_kWh_consumption_rest_of_hour: '{{ ((non_ev_power_moving_avg / 1000.0)
+            * time_left_current_hour) }}'
+          available_kWh_left_for_charging_current_hour: '{{ [0, kWh_limit - kWh_consumption_current_hour
+            - non_ev_kWh_consumption_rest_of_hour] | max }}'
+          power_charging_rest_of_hour: '{{ (available_kWh_left_for_charging_current_hour
+            / time_left_current_hour) * 1000.0 }}'
+          will_draw_more_power_than_power_limit: '{{ (power_charging_rest_of_hour
+            + non_ev_power_now) > power_limit_entity }}'
+          power_limit_charging: "{%- if will_draw_more_power_than_power_limit -%}\n
+            \ {{ power_limit_entity - non_ev_power_now }}\n{%- else -%}\n  {{ power_charging_rest_of_hour
+            }}\n{%- endif -%}"
+          new_charge_limit_amps: '{{ (power_limit_charging / volts) | round(0)}}'
+          new_charge_limit: "{%- if new_charge_limit_amps >= ev_charger_min_current
+            -%}\n  {%- if current_charge_limit_amps == 0 and new_charge_limit_amps
+            < (ev_charger_min_current + 3) -%}\n    0.0\n  {%- else -%}\n    {{ [[new_charge_limit_amps,
+            min_amp_limit] | max, max_amp_limit] | min }}\n  {%- endif -%}\n{%- else
+            -%}\n  {%- if (time_left_current_hour < 0.016 and current_charge_limit_amps
+            > 0) or (time_left_current_hour < 0.15 and new_charge_limit_amps >= 3)
+            -%}\n    {{ ev_charger_min_current }}\n  {%- else -%}\n    0.0\n  {%-
+            endif -%}\n{%- endif -%}"
+      - data:
+          value: '{{ new_charge_limit }}'
+        target:
+          entity_id: number.ev_charger_installation_available_current
+        enabled: true
+        action: number.set_value
+      - if:
+        - condition: template
+          value_template: '{{ current_charge_limit_amps != 0 and new_charge_limit
+            | int == 0 }}'
+        then:
+        - data:
+            level: warning
+            message: 'New charge limit was 0. data: { "is_same_hour_as_HA_start_hour":
+              "{{ is_same_hour_as_HA_start_hour }}", "current_charge_limit_amps":
+              "{{ current_charge_limit_amps }}", "power_used_total": "{{ power_used_total
+              }}", "non_ev_power_now": "{{ non_ev_power_now }}", "kWh_limit_entity":
+              "{{ kWh_limit_entity }}", "kWh_consumption_current_hour": "{{ kWh_consumption_current_hour
+              }}", "ev_charger_min_current": "{{ ev_charger_min_current }}", "non_ev_power_moving_avg":
+              "{{ non_ev_power_moving_avg }}", "time_left_current_hour": "{{ time_left_current_hour
+              }}", "non_ev_kWh_consumption_rest_of_hour": "{{ non_ev_kWh_consumption_rest_of_hour
+              }}", "available_kWh_left_for_charging_current_hour": "{{ available_kWh_left_for_charging_current_hour
+              }}", "power_charging_rest_of_hour": "{{ power_charging_rest_of_hour }}",
+              "will_draw_more_power_than_power_limit": "{{ will_draw_more_power_than_power_limit }}",
+              "power_limit_charging": "{{ power_limit_charging }}", "new_charge_limit_amps":
+              "{{ new_charge_limit_amps }}", "new_charge_limit": "{{ new_charge_limit
+              }}" }'
+          enabled: true
+          action: system_log.write
+        enabled: false
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: sensor.ev_smart_charging_charging
+          state: 'off'
+        - condition: state
+          entity_id: sensor.ev_charger_charger_mode
+          state: Disconnected
+      sequence:
+      - data:
+          value: '0'
+        target:
+          entity_id: number.ev_charger_installation_available_current
+        enabled: true
+        action: number.set_value
+    default: []
   mode: single
 - id: '1701639669414'
   alias: EV smart charging set charge speed based on max kWh
@@ -1381,29 +1435,48 @@
   - platform: state
     entity_id:
     - sensor.ev_smart_charging_charging
-    attribute: Charging number of hours
+    attribute: charging_start_time
   - platform: state
     entity_id:
     - sensor.ev_smart_charging_charging
-    attribute: Charging start time
-  - platform: state
-    entity_id:
-    - sensor.ev_smart_charging_charging
-    attribute: Charging stop time
+    attribute: charging_stop_time
   - platform: state
     entity_id:
     - sensor.varmtvannsbereder_on
-  condition: []
+    attribute: today_on
+  - platform: state
+    entity_id:
+    - sensor.varmtvannsbereder_on
+    attribute: tomorrow_on
+  - platform: state
+    entity_id:
+    - sensor.ev_charger_charger_mode
+    from: Disconnected
+    to:
+  condition:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: sensor.ev_smart_charging_charging
+      state: 'On'
+  - condition: template
+    value_template: '{{ has_value(''number.ev_smart_charging_charging_speed'') }}'
+    alias: Check if ev_smart_charging_charging_speed is available
+    enabled: true
+  - alias: Check that last changed is more than 1 minute ago
+    condition: template
+    value_template: '{{ now() - states.number.ev_smart_charging_charging_speed.last_changed
+      > timedelta(minutes = 1) }}'
   action:
-  - service: weather.get_forecasts
-    target:
+  - target:
       entity_id: weather.home
     data:
       type: hourly
     response_variable: weather_forecast
+    action: weather.get_forecasts
   - variables:
-      num_hours_to_charge: '{{ state_attr("sensor.ev_smart_charging_charging", "Charging
-        number of hours") | float(0) }}'
+      num_hours_to_charge: '{{ state_attr("sensor.ev_smart_charging_charging", "charging_number_of_hours")
+        | float(0) }}'
   - if:
     - condition: template
       value_template: '{{ num_hours_to_charge > 0 }}'
@@ -1413,15 +1486,15 @@
       alias: kWh limit is higher than 3
     then:
     - variables:
-        margin: 0.125
+        margin: 0
         kWh_battery: 75
-        minimum_temp_modifier: -12
-        minimum_temp_speed_modifier: 0.5
+        minimum_temp_modifier: -20
+        minimum_temp_speed_modifier: 0.6
         kWh_limit: '{{ states(''input_number.kwh_limit'') | float(0) }}'
         power_limit: '{{ kWh_limit * (1-margin) * 1000 }}'
         six_amps_power: '{{ 6 * 230 }}'
         water_heater_power: 2000
-        busy_hour_power: 3000
+        busy_hour_power: 1500
         water_heater_hours: "{%- set now=now() -%}\n{{state_attr('sensor.varmtvannsbereder_on',
           'hours_on_datetime')\n  | default([])\n  | select('gt', now)\n  | map(attribute='hour')\n
           \ | list\n}}"
@@ -1464,13 +1537,13 @@
           (1-ns.temperature_speed_modifier) -%}\n    {%- set ns.speeds = ns.speeds
           + [speed] -%}\n  {%- endif -%}\n{%- endfor -%}\n{{ ns.speeds }}"
         estimated_speed: '{{ ((calculated_speeds | sum) / (calculated_speeds | length))
-          | round(1, ''floor'') }}'
-    - service: number.set_value
-      data:
+          | default(0) | round(1, ''floor'') }}'
+    - data:
         value: '{{ estimated_speed }}'
       target:
         entity_id: number.ev_smart_charging_charging_speed
       enabled: true
+      action: number.set_value
   mode: single
   max_exceeded: silent
 - id: '1702760707198'
@@ -1607,4 +1680,178 @@
           entity_id: select.ev_smart_charging_charge_completion_time
         data:
           option: '{{ option_to_set }}'
+  mode: single
+- id: '1704834782072'
+  alias: 'EV smart charging toggle continuous charging '
+  description: ''
+  triggers:
+  - entity_id:
+    - weather.home
+    trigger: state
+  - trigger: time_pattern
+    hours: /1
+  conditions: []
+  actions:
+  - action: weather.get_forecasts
+    metadata: {}
+    data:
+      type: daily
+    target:
+      entity_id: weather.home
+    response_variable: forecast
+  - if:
+    - alias: Test if forecast low temperature is above 0
+      condition: template
+      value_template: '{{ forecast["weather.home"]["forecast"][0].templow > 0 }}'
+    then:
+    - metadata: {}
+      data: {}
+      target:
+        entity_id: switch.ev_smart_charging_continuous_charging_preferred
+      action: switch.turn_off
+    else:
+    - metadata: {}
+      data: {}
+      target:
+        entity_id: switch.ev_smart_charging_continuous_charging_preferred
+      action: switch.turn_on
+  mode: single
+- id: '1727200394891'
+  alias: Notify vaskemaskin stopped
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id:
+    - sensor.vaskemaskin_power
+    below: 5
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: input_boolean.vaskemaskin_running
+    state: 'on'
+  action:
+  - action: notify.mobile_app_dagphone
+    metadata: {}
+    data:
+      message: Vaskemaskin ferdig!
+  - action: notify.mobile_app_iphone_ingvild
+    metadata: {}
+    data:
+      message: Vaskemaskin ferdig!
+  - action: tts.google_translate_say
+    metadata: {}
+    data:
+      cache: false
+      entity_id: media_player.kjokken
+      message: Vaskemaskinen i kjelleren er ferdig!
+      language: 'no'
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.vaskemaskin_running
+  mode: single
+- id: '1727200565201'
+  alias: Set vaskemaskin running
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id:
+    - sensor.vaskemaskin_power
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+    above: 5
+  condition: []
+  action:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.vaskemaskin_running
+  mode: single
+- id: '1727247225263'
+  alias: Turn off kaffetrakter after 45 minutes
+  description: ''
+  triggers:
+  - entity_id:
+    - switch.kaffetrakter
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 45
+      seconds: 0
+    trigger: state
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.kaffetrakter
+  - action: tts.google_translate_say
+    data:
+      cache: true
+      message: Slo av kaffetrakteren.
+      entity_id: media_player.soverom, media_player.kjokken, media_player.sonos_roam_sl
+      language: 'no'
+  mode: single
+- id: '1727253150692'
+  alias: Notify water leak
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.lekkasje_kjokken_water_leak
+    to: 'on'
+  condition: []
+  action:
+  - action: notify.mobile_app_dagphone
+    metadata: {}
+    data:
+      message: Lekkasje under vasken!
+  - action: notify.mobile_app_iphone_ingvild
+    metadata: {}
+    data:
+      message: Lekkasje under vasken!
+  mode: single
+- id: '1727327685962'
+  alias: Notify coffee ready
+  trigger:
+  - platform: numeric_state
+    entity_id:
+    - sensor.kaffetrakter_power
+    above: 1000
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 15
+  condition: []
+  action:
+  - wait_for_trigger:
+    - platform: numeric_state
+      entity_id:
+      - sensor.kaffetrakter_power
+      below: 100
+    timeout:
+      hours: 0
+      minutes: 10
+      seconds: 0
+      milliseconds: 0
+    continue_on_timeout: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - action: tts.google_translate_say
+    data:
+      cache: true
+      message: Kaffen er klar!
+      entity_id: media_player.soverom, media_player.kjokken, media_player.sonos_roam_sl
+      language: 'no'
   mode: single
