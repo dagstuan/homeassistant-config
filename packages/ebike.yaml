@@ -1,0 +1,9 @@
+ebike:
+  counter:
+    ebike_number_of_charges:
+      name: Ebike number of charges
+      initial: 0
+      step: 1
+  input_boolean:
+    ebike_charging:
+      name: Ebike charging

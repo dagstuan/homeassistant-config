@@ -82,3 +82,33 @@ kaffetrakter_morning:
         language: 'no'
         entity_id: media_player.soverom
         message: Slo ikke på kaffetrakteren siden det ikke var kaffe der.
+precondition_on_grid:
+  sequence:
+  - action: button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id: button.ev_smart_charging_manually_start_charging
+  - action: climate.set_hvac_mode
+    metadata: {}
+    data:
+      hvac_mode: heat_cool
+    target:
+      entity_id: climate.pingu_hvac_climate_system
+  alias: Precondition on grid
+  description: ''
+stop_precondition_on_grid:
+  sequence:
+  - action: button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id: button.ev_smart_charging_manually_stop_charging
+  - action: climate.set_hvac_mode
+    metadata: {}
+    data:
+      hvac_mode: 'off'
+    target:
+      entity_id: climate.pingu_hvac_climate_system
+  alias: Stop precondition on grid
+  description: ''

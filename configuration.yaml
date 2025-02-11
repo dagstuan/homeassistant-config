@@ -70,6 +70,7 @@ recorder:
       - sensor.non_ev*
       - sensor.kaffetrakter*
       - sensor.vaskemaskin*
+      - sensor.elsykkel*
   db_url: !secret mariadb_url
 
 http:
@@ -113,6 +114,11 @@ google_assistant:
     - light
     - climate
   entity_config:
+    input_boolean.wakeup_enabled:
+      name: "Alarmen"
+      expose: true
+      aliases:
+        - Alarm
     switch.kaffetrakter:
       name: "Kaffetrakter"
       expose: true
@@ -137,6 +143,12 @@ google_assistant:
         - Mikrobølgeovn
         - Kjøkkenøya
         - Hengelys
+    switch.elsykkel:
+      name: "Elsykkel"
+      expose: true
+      aliases:
+        - Elsykkelladeren
+        - Elsykkelen
 
 input_boolean:
   dag_home:
@@ -188,7 +200,10 @@ template:
           (states('sensor.mill_kontor_current_power') | float(0)) -
           (states('sensor.mill_stua_current_power') | float(0)) -
           (states('sensor.mill_soverom_current_power') | float(0)) -
-          (states('sensor.climate_bad_current_power') | float(0)))
+          (states('sensor.climate_bad_current_power') | float(0)) -
+          (states('sensor.kaffetrakter_power') | float(0)) -
+          (states('sensor.vaskemaskin_power') | float(0)) -
+          (states('sensor.elsykkel_power') | float(0)))
           | round(3), 0] | max
         }}
       unit_of_measurement: W
@@ -236,30 +251,20 @@ sensor:
     price_type: kWh
     currency: NOK
     additional_costs: >-
-      {%  set price_with_stromstotte = max(current_price - 0.9125, 0) %}
+      {%  set price_with_stromstotte = max(current_price - 0.9375, 0) %}
       {%  set s = {
-          "kapasitetsledd_maaned_kost": 239,
+          "kapasitetsledd_maaned_kost": 244,
           "energiselskap_maaned_kost": 0,
-          "energiledd_vinter_dag_inkl_avg_og_mva": 0.3989,
-          "energiledd_vinter_natt_inkl_avg_og_mva": 0.2651,
-          "energiledd_sommer_dag_inkl_avg_og_mva": 0.5018,
-          "energiledd_sommer_natt_inkl_avg_og_mva": 0.3593,
+          "energiledd_dag_inkl_avg_og_mva": 0.4249,
+          "energiledd_natt_inkl_avg_og_mva": 0.2786,
           "stromstotte": price_with_stromstotte * 0.9
         }
       %}
       {% set now = now() %}
-      {% if now.month >= 1 and now.month <= 3 %}
-        {% if now.hour >= 6 and now.hour <= 22 %}
-            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_vinter_dag_inkl_avg_og_mva-s.stromstotte|float}}
-        {% else %}
-            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_vinter_natt_inkl_avg_og_mva-s.stromstotte|float}}
-        {% endif %}
+      {% if now.hour >= 6 and now.hour <= 22 %}
+          {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_dag_inkl_avg_og_mva-s.stromstotte|float}}
       {% else %}
-        {% if now.hour >= 6 and now.hour <= 22 %}
-            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_sommer_dag_inkl_avg_og_mva-s.stromstotte|float}}
-        {% else %}
-            {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_sommer_natt_inkl_avg_og_mva-s.stromstotte|float}}
-        {% endif %}
+          {{(((s.kapasitetsledd_maaned_kost+s.energiselskap_maaned_kost)*12)/365/24)+s.energiledd_natt_inkl_avg_og_mva-s.stromstotte|float}}
       {% endif %}
 
   - platform: integration
